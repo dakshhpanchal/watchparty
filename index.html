@@ -1134,6 +1134,12 @@ function setMainVideo(stream,label){
 
   v.srcObject=stream;
 
+  v.play().catch(()=>{
+    if(stream?.getAudioTracks().length){
+      toast('Click the shared video to enable audio');
+    }
+  });
+
   document.getElementById('placeholder')
     .style.display='none';
 
@@ -1161,6 +1167,8 @@ function setActiveShare(ownerId,ownerName,stream){
   state.activeShareOwner=ownerId;
   state.activeShareName=ownerName || 'Someone';
   state.activeShareStream=stream;
+
+  document.getElementById('main-video').muted = ownerId===peer?.id;
 
   setMainVideo(
     stream,
@@ -1544,7 +1552,7 @@ async function startSharing(){
     const stream =
       await navigator.mediaDevices.getDisplayMedia({
         video:true,
-        audio:false
+        audio:true
       });
 
     state.screenStream=stream;
