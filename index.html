@@ -628,6 +628,9 @@ const state = {
   participants:new Set(),
   screenStream:null,
   micStream:null,
+  activeShareOwner:null,
+  activeShareName:'',
+  activeShareStream:null,
   isSharing:false,
   micEnabled:false,
   activeTab:'peers',
@@ -716,13 +719,7 @@ async function initPeer(customId=null){
     });
 
     peer.on('call',call=>{
-
-      call.answer();
-
-      call.on('stream',stream=>{
-        setMainVideo(stream,`${call.peer}'s screen`);
-      });
-
+      handleMediaCall(call);
     });
 
     peer.on('connection',conn=>{
@@ -745,6 +742,18 @@ function showRoom(){
 function updatePeerCount(){
   document.getElementById('peer-count-num').textContent =
     state.participants.size + 1;
+}
+
+function isHost(){
+  return peer?.id?.startsWith('ROOM-');
+}
+
+function broadcastData(msg,exceptPeerId=null){
+  for(const [peerId,p] of Object.entries(state.peers)){
+    if(peerId!==exceptPeerId && p.dataConn?.open){
+      p.dataConn.send(JSON.stringify(msg));
+    }
+  }
 }
 
 /* ---------- CREATE ---------- */
@@ -873,6 +882,8 @@ function setupDataConn(conn){
 
         addPeerCard(peerId,msg.name);
 
+        callPeerWithActiveShare(peerId);
+
       }
 
       if(msg.type==='chat'){
@@ -881,6 +892,16 @@ function setupDataConn(conn){
           msg.name,
           msg.text
         );
+
+      }
+
+      if(msg.type==='screen-stop'){
+
+        handleRemoteShareStop(msg.ownerId || peerId);
+
+        if(isHost()){
+          broadcastData(msg,peerId);
+        }
 
       }
 
@@ -1096,6 +1117,178 @@ function setMainVideo(stream,label){
 
 }
 
+function clearMainVideo(){
+
+  const v=document.getElementById('main-video');
+
+  v.srcObject=null;
+
+  document.getElementById('placeholder')
+    .style.display='block';
+
+  document.getElementById('stage-label')
+    .textContent='No screen shared';
+
+}
+
+function setActiveShare(ownerId,ownerName,stream){
+
+  state.activeShareOwner=ownerId;
+  state.activeShareName=ownerName || 'Someone';
+  state.activeShareStream=stream;
+
+  setMainVideo(
+    stream,
+    `${state.activeShareName}'s screen`
+  );
+
+}
+
+function clearActiveShare(ownerId=null){
+
+  if(ownerId && state.activeShareOwner!==ownerId) return;
+
+  state.activeShareOwner=null;
+  state.activeShareName='';
+  state.activeShareStream=null;
+
+  clearMainVideo();
+
+}
+
+function closeCall(call){
+
+  try{
+    call?.close();
+  }catch{}
+
+}
+
+function screenMetadata(ownerId=peer.id,ownerName=state.myName){
+
+  return {
+    type:'screen',
+    ownerId,
+    ownerName
+  };
+
+}
+
+function callPeerWithStream(peerId,stream,metadata){
+
+  if(!stream || peerId===peer.id) return null;
+
+  const p=state.peers[peerId];
+
+  if(!p) return null;
+
+  closeCall(p.call);
+
+  const call=peer.call(peerId,stream,{metadata});
+
+  p.call=call;
+
+  call.on('close',()=>{
+    if(p.call===call) p.call=null;
+  });
+
+  call.on('error',()=>{
+    if(p.call===call) p.call=null;
+  });
+
+  return call;
+
+}
+
+function callPeerWithActiveShare(peerId){
+
+  if(state.screenStream){
+    callPeerWithStream(
+      peerId,
+      state.screenStream,
+      screenMetadata()
+    );
+    return;
+  }
+
+  if(isHost() && state.activeShareStream){
+    callPeerWithStream(
+      peerId,
+      state.activeShareStream,
+      screenMetadata(
+        state.activeShareOwner,
+        state.activeShareName
+      )
+    );
+  }
+
+}
+
+function relayShareToPeers(stream,metadata,exceptPeerId){
+
+  if(!isHost()) return;
+
+  for(const peerId of Object.keys(state.peers)){
+    if(peerId!==exceptPeerId){
+      callPeerWithStream(peerId,stream,metadata);
+    }
+  }
+
+}
+
+function handleMediaCall(call){
+
+  const metadata=call.metadata || {};
+  const ownerId=metadata.ownerId || call.peer;
+  const ownerName=metadata.ownerName || call.peer;
+
+  call.answer();
+
+  call.on('stream',stream=>{
+
+    setActiveShare(ownerId,ownerName,stream);
+
+    stream.getVideoTracks().forEach(track=>{
+      track.addEventListener('ended',()=>{
+        handleRemoteShareStop(ownerId);
+      });
+    });
+
+    relayShareToPeers(
+      stream,
+      screenMetadata(ownerId,ownerName),
+      call.peer
+    );
+
+  });
+
+  call.on('close',()=>{
+    handleRemoteShareStop(ownerId);
+  });
+
+  call.on('error',()=>{
+    handleRemoteShareStop(ownerId);
+  });
+
+}
+
+function handleRemoteShareStop(ownerId){
+
+  if(state.activeShareOwner!==ownerId) return;
+
+  clearActiveShare(ownerId);
+
+  if(isHost()){
+    for(const [peerId,p] of Object.entries(state.peers)){
+      if(peerId!==ownerId){
+        closeCall(p.call);
+        p.call=null;
+      }
+    }
+  }
+
+}
+
 /* ---------- SCREEN SHARE ---------- */
 
 async function toggleScreenShare(){
@@ -1121,16 +1314,19 @@ async function startSharing(){
     state.screenStream=stream;
     state.isSharing=true;
 
-    setMainVideo(
-      stream,
-      `${state.myName}'s screen`
-    );
+    setActiveShare(peer.id,state.myName,stream);
+
+    stream.getVideoTracks().forEach(track=>{
+      track.addEventListener('ended',stopSharing,{once:true});
+    });
 
     for(const [peerId,p] of Object.entries(state.peers)){
 
-      const call=peer.call(peerId,stream);
-
-      p.call=call;
+      callPeerWithStream(
+        peerId,
+        stream,
+        screenMetadata()
+      );
 
     }
 
@@ -1150,14 +1346,26 @@ async function startSharing(){
 
 function stopSharing(){
 
-  if(!state.screenStream) return;
+  if(!state.screenStream || !state.isSharing) return;
+
+  state.isSharing=false;
+
+  broadcastData({
+    type:'screen-stop',
+    ownerId:peer.id
+  });
+
+  for(const [,p] of Object.entries(state.peers)){
+    closeCall(p.call);
+    p.call=null;
+  }
 
   state.screenStream.getTracks()
     .forEach(t=>t.stop());
 
   state.screenStream=null;
 
-  state.isSharing=false;
+  clearActiveShare(peer.id);
 
   document.getElementById('share-btn')
     .classList.remove('danger');
