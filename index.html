@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WatchTogether</title>
+<title>WatchParty</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -474,7 +474,7 @@ input:focus{
   <div class="lobby-wrap">
 
     <div class="hero">
-      <h1>WatchTogether</h1>
+      <h1>WatchParty</h1>
       <p>Peer-to-peer screen sharing and watch parties.</p>
     </div>
 
@@ -518,7 +518,7 @@ input:focus{
 <div id="room">
 
   <div class="topbar">
-    <div class="logo">WatchTogether</div>
+    <div class="logo">WatchParty</div>
 
     <div class="room-pill" id="header-room-id"></div>
 
@@ -628,6 +628,7 @@ const state = {
   participants:new Set(),
   screenStream:null,
   micStream:null,
+  remoteMicStreams:{},
   activeShareOwner:null,
   activeShareName:'',
   activeShareStream:null,
@@ -883,6 +884,11 @@ function setupDataConn(conn){
         addPeerCard(peerId,msg.name);
 
         callPeerWithActiveShare(peerId);
+        callPeerWithActiveMic(peerId);
+
+        if(isHost()){
+          relayActiveMicsToPeer(peerId);
+        }
 
       }
 
@@ -905,6 +911,16 @@ function setupDataConn(conn){
 
       }
 
+      if(msg.type==='mic-stop'){
+
+        handleRemoteMicStop(msg.ownerId || peerId);
+
+        if(isHost()){
+          broadcastData(msg,peerId);
+        }
+
+      }
+
     }catch{}
 
   });
@@ -920,6 +936,15 @@ function setupDataConn(conn){
     );
 
     if(card) card.remove();
+
+    handleRemoteMicStop(peerId);
+
+    if(isHost()){
+      broadcastData({
+        type:'mic-stop',
+        ownerId:peerId
+      },peerId);
+    }
 
   });
 
@@ -1174,6 +1199,16 @@ function screenMetadata(ownerId=peer.id,ownerName=state.myName){
 
 }
 
+function micMetadata(ownerId=peer.id,ownerName=state.myName){
+
+  return {
+    type:'mic',
+    ownerId,
+    ownerName
+  };
+
+}
+
 function callPeerWithStream(peerId,stream,metadata){
 
   if(!stream || peerId===peer.id) return null;
@@ -1194,6 +1229,50 @@ function callPeerWithStream(peerId,stream,metadata){
 
   call.on('error',()=>{
     if(p.call===call) p.call=null;
+  });
+
+  return call;
+
+}
+
+function getPeerState(peerId){
+
+  const p=state.peers[peerId];
+
+  if(!p) return null;
+
+  if(!p.micCalls) p.micCalls={};
+
+  return p;
+
+}
+
+function callPeerWithMic(peerId,stream,metadata=micMetadata()){
+
+  if(!stream || peerId===peer.id) return null;
+
+  const p=getPeerState(peerId);
+
+  if(!p) return null;
+
+  const ownerId=metadata.ownerId || peer.id;
+
+  closeCall(p.micCalls[ownerId]);
+
+  const call=peer.call(peerId,stream,{metadata});
+
+  p.micCalls[ownerId]=call;
+
+  call.on('close',()=>{
+    if(p.micCalls[ownerId]===call){
+      delete p.micCalls[ownerId];
+    }
+  });
+
+  call.on('error',()=>{
+    if(p.micCalls[ownerId]===call){
+      delete p.micCalls[ownerId];
+    }
   });
 
   return call;
@@ -1224,6 +1303,18 @@ function callPeerWithActiveShare(peerId){
 
 }
 
+function callPeerWithActiveMic(peerId){
+
+  if(state.micEnabled && state.micStream){
+    callPeerWithMic(
+      peerId,
+      state.micStream,
+      micMetadata()
+    );
+  }
+
+}
+
 function relayShareToPeers(stream,metadata,exceptPeerId){
 
   if(!isHost()) return;
@@ -1236,9 +1327,41 @@ function relayShareToPeers(stream,metadata,exceptPeerId){
 
 }
 
+function relayMicToPeers(stream,metadata,exceptPeerId){
+
+  if(!isHost()) return;
+
+  for(const peerId of Object.keys(state.peers)){
+    if(peerId!==exceptPeerId){
+      callPeerWithMic(peerId,stream,metadata);
+    }
+  }
+
+}
+
+function relayActiveMicsToPeer(peerId){
+
+  if(!isHost()) return;
+
+  for(const [ownerId,stream] of Object.entries(state.remoteMicStreams)){
+    callPeerWithMic(
+      peerId,
+      stream,
+      micMetadata(ownerId)
+    );
+  }
+
+}
+
 function handleMediaCall(call){
 
   const metadata=call.metadata || {};
+
+  if(metadata.type==='mic'){
+    handleMicCall(call);
+    return;
+  }
+
   const ownerId=metadata.ownerId || call.peer;
   const ownerName=metadata.ownerName || call.peer;
 
@@ -1272,6 +1395,112 @@ function handleMediaCall(call){
 
 }
 
+function micElementId(ownerId){
+
+  return 'remote-mic-'+ownerId.replace(/[^a-z0-9_-]/gi,'-');
+
+}
+
+function setRemoteMic(ownerId,stream){
+
+  if(ownerId===peer?.id) return;
+
+  state.remoteMicStreams[ownerId]=stream;
+
+  let audio=document.getElementById(micElementId(ownerId));
+
+  if(!audio){
+    audio=document.createElement('audio');
+    audio.id=micElementId(ownerId);
+    audio.autoplay=true;
+    audio.playsInline=true;
+    document.body.appendChild(audio);
+  }
+
+  audio.srcObject=stream;
+
+  audio.play().catch(()=>{
+    toast('Click anywhere to enable mic audio');
+  });
+
+}
+
+function removeRemoteMic(ownerId){
+
+  delete state.remoteMicStreams[ownerId];
+
+  const audio=document.getElementById(micElementId(ownerId));
+
+  if(audio){
+    audio.srcObject=null;
+    audio.remove();
+  }
+
+}
+
+function closeMicCallsForOwner(ownerId){
+
+  for(const p of Object.values(state.peers)){
+    if(p.micCalls?.[ownerId]){
+      closeCall(p.micCalls[ownerId]);
+      delete p.micCalls[ownerId];
+    }
+  }
+
+}
+
+function stopMicSharing(){
+
+  if(!state.micEnabled) return;
+
+  state.micEnabled=false;
+
+  if(state.micStream){
+    state.micStream
+      .getAudioTracks()
+      .forEach(track=>{
+        track.enabled=false;
+      });
+  }
+
+  broadcastData({
+    type:'mic-stop',
+    ownerId:peer.id
+  });
+
+  closeMicCallsForOwner(peer.id);
+
+  const btn=document.getElementById('mute-btn');
+
+  if(btn){
+    btn.textContent='Mic Off';
+    btn.classList.add('active');
+  }
+
+}
+
+function handleMicCall(call){
+
+  const metadata=call.metadata || {};
+  const ownerId=metadata.ownerId || call.peer;
+
+  call.answer();
+
+  call.on('stream',stream=>{
+    setRemoteMic(ownerId,stream);
+    relayMicToPeers(stream,micMetadata(ownerId),call.peer);
+  });
+
+  call.on('close',()=>{
+    handleRemoteMicStop(ownerId);
+  });
+
+  call.on('error',()=>{
+    handleRemoteMicStop(ownerId);
+  });
+
+}
+
 function handleRemoteShareStop(ownerId){
 
   if(state.activeShareOwner!==ownerId) return;
@@ -1286,6 +1515,13 @@ function handleRemoteShareStop(ownerId){
       }
     }
   }
+
+}
+
+function handleRemoteMicStop(ownerId){
+
+  removeRemoteMic(ownerId);
+  closeMicCallsForOwner(ownerId);
 
 }
 
@@ -1308,7 +1544,7 @@ async function startSharing(){
     const stream =
       await navigator.mediaDevices.getDisplayMedia({
         video:true,
-        audio:true
+        audio:false
       });
 
     state.screenStream=stream;
@@ -1387,39 +1623,34 @@ async function toggleMute(){
 
       state.micStream =
         await navigator.mediaDevices.getUserMedia({
-          audio:true
+          audio:{
+            echoCancellation:true,
+            noiseSuppression:true,
+            autoGainControl:true
+          }
         });
 
     }
 
-    state.micEnabled=!state.micEnabled;
+    const turningOn=!state.micEnabled;
 
     state.micStream
       .getAudioTracks()
       .forEach(track=>{
-        track.enabled=state.micEnabled;
+        track.enabled=turningOn;
       });
 
-    for(const [,p] of Object.entries(state.peers)){
+    if(turningOn){
 
-      if(p.call?.peerConnection){
+      state.micEnabled=true;
 
-        const sender =
-          p.call.peerConnection
-            .getSenders()
-            .find(s=>s.track?.kind==='audio');
-
-        if(!sender && state.micEnabled){
-
-          const track =
-            state.micStream.getAudioTracks()[0];
-
-          p.call.peerConnection
-            .addTrack(track,state.micStream);
-
-        }
-
+      for(const peerId of Object.keys(state.peers)){
+        callPeerWithMic(peerId,state.micStream,micMetadata());
       }
+
+    }else{
+
+      stopMicSharing();
 
     }
 
@@ -1464,6 +1695,7 @@ function toggleFullscreen(){
 function leaveRoom(){
 
   stopSharing();
+  stopMicSharing();
 
   if(state.micStream){
 
@@ -1486,6 +1718,7 @@ window.addEventListener('beforeunload',()=>{
   try{
 
     stopSharing();
+    stopMicSharing();
 
     if(state.micStream){
 
