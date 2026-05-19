@@ -46,8 +46,6 @@ button{
   display:none !important;
 }
 
-/* ---------- LOBBY ---------- */
-
 #lobby{
   min-height:100vh;
   display:flex;
@@ -157,7 +155,6 @@ input:focus{
   margin-top:10px;
 }
 
-/* ---------- ROOM ---------- */
 
 #room{
   height:100vh;
@@ -468,7 +465,7 @@ input:focus{
 
 <body>
 
-<!-- LOBBY -->
+
 
 <div id="lobby">
   <div class="lobby-wrap">
@@ -513,7 +510,7 @@ input:focus{
   </div>
 </div>
 
-<!-- ROOM -->
+
 
 <div id="room">
 
@@ -642,7 +639,7 @@ const state = {
 let peer = null;
 let toastTimer;
 
-/* ---------- UTIL ---------- */
+
 
 function toast(msg,dur=2500){
   const el=document.getElementById('toast');
@@ -668,7 +665,7 @@ function genRoomId(){
   return id;
 }
 
-/* ---------- PEERJS ---------- */
+
 
 function loadPeerJS(){
   return new Promise(resolve=>{
@@ -731,7 +728,7 @@ async function initPeer(customId=null){
 
 }
 
-/* ---------- ROOM ---------- */
+
 
 function showRoom(){
   document.getElementById('lobby').style.display='none';
@@ -757,7 +754,7 @@ function broadcastData(msg,exceptPeerId=null){
   }
 }
 
-/* ---------- CREATE ---------- */
+
 
 async function createRoom(){
 
@@ -805,7 +802,7 @@ async function createRoom(){
   state.loading=false;
 }
 
-/* ---------- JOIN ---------- */
+
 
 async function joinRoom(){
 
@@ -854,7 +851,7 @@ async function joinRoom(){
   state.loading=false;
 }
 
-/* ---------- DATA ---------- */
+
 
 function setupDataConn(conn){
 
@@ -951,7 +948,7 @@ function setupDataConn(conn){
   state.peers[peerId]={dataConn:conn};
 }
 
-/* ---------- PEERS ---------- */
+
 
 function addPeerCard(id,name){
 
@@ -972,7 +969,7 @@ function addPeerCard(id,name){
   panel.appendChild(card);
 }
 
-/* ---------- CHAT ---------- */
+
 
 function addChatMsg(author,text,isSystem=false){
 
@@ -1066,7 +1063,7 @@ function sendChat(){
 
 }
 
-/* ---------- TABS ---------- */
+
 
 function switchTab(tab){
 
@@ -1126,7 +1123,7 @@ function updateChatBadge(){
 
 }
 
-/* ---------- VIDEO ---------- */
+
 
 function setMainVideo(stream,label){
 
@@ -1533,7 +1530,7 @@ function handleRemoteMicStop(ownerId){
 
 }
 
-/* ---------- SCREEN SHARE ---------- */
+
 
 async function toggleScreenShare(){
 
@@ -1619,7 +1616,7 @@ function stopSharing(){
 
 }
 
-/* ---------- MIC ---------- */
+
 
 async function toggleMute(){
 
@@ -1684,7 +1681,7 @@ async function toggleMute(){
 
 }
 
-/* ---------- FULLSCREEN ---------- */
+
 
 function toggleFullscreen(){
 
@@ -1698,7 +1695,7 @@ function toggleFullscreen(){
 
 }
 
-/* ---------- LEAVE ---------- */
+
 
 function leaveRoom(){
 
@@ -1719,7 +1716,7 @@ function leaveRoom(){
   location.reload();
 }
 
-/* ---------- CLEANUP ---------- */
+
 
 window.addEventListener('beforeunload',()=>{
 
@@ -1743,7 +1740,7 @@ window.addEventListener('beforeunload',()=>{
 
 });
 
-/* ---------- URL ROOM ---------- */
+
 
 window.addEventListener('DOMContentLoaded',()=>{
 
