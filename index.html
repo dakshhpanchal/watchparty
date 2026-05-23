@@ -140,12 +140,18 @@
     }
     .stage-label, #fullscreen-btn { pointer-events: auto; }
     .stage-label {
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(8px);
-      padding: 0.4rem 1rem;
+      padding: 0.45rem 1.2rem;
       border-radius: 2rem;
       font-size: 0.75rem;
       border: 0.5px solid rgba(255,255,255,0.2);
+      text-align: center;
+      z-index: 5;
     }
     #fullscreen-btn {
       background: rgba(0,0,0,0.6);
@@ -158,7 +164,8 @@
       cursor: pointer;
     }
     .sidebar {
-      width: 320px;
+      width: 360px;
+      min-width: 360px;
       background: var(--surface);
       border-left: 1px solid var(--border);
       display: flex;
@@ -217,7 +224,25 @@
       border-top: 1px solid var(--border);
       padding: 0.8rem;
       display: flex;
-      gap: 0.6rem;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+    }
+
+    .chat-input input {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+    }
+
+    #send-chat-btn {
+      height: 46px;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 0.9rem;
     }
     .controls {
       height: 70px;
