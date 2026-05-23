@@ -267,28 +267,28 @@
 
 <div id="lobby">
   <div class="lobby-wrap">
-    <div class="hero"><h1>WatchParty</h1><p>Resilient P2P · Screen share + voice · Host migration</p></div>
+    <div class="hero"><h1>WatchParty</h1></div>
     <div class="cards">
-      <div class="card"><h2>✨ Create Room</h2><p>Host a private watch party.</p><div class="input-group"><input id="host-name" placeholder="Your name" maxlength="32"><button class="btn btn-primary" id="create-btn">Create Room</button><div id="room-id-display" class="room-code-box hidden"></div></div></div>
-      <div class="card"><h2>🔗 Join Room</h2><p>Enter 6‑character code (ABC‑123).</p><div class="input-group"><input id="join-name" placeholder="Your name" maxlength="32"><input id="join-code" placeholder="Room code"><button class="btn btn-secondary" id="join-btn">Join Room</button></div></div>
+      <div class="card"><h2> Create Room</h2><p>Host a private watch party.</p><div class="input-group"><input id="host-name" placeholder="Your name" maxlength="32"><button class="btn btn-primary" id="create-btn">Create Room</button><div id="room-id-display" class="room-code-box hidden"></div></div></div>
+      <div class="card"><h2> Join Room</h2><p>Enter 6‑character code (ABC‑123).</p><div class="input-group"><input id="join-name" placeholder="Your name" maxlength="32"><input id="join-code" placeholder="Room code"><button class="btn btn-secondary" id="join-btn">Join Room</button></div></div>
     </div>
   </div>
 </div>
 
 <div id="room">
-  <div class="topbar"><div class="logo">🎬 WatchParty</div><div class="room-pill" id="header-room-id"></div><div class="peer-count">👥 <span id="peer-count-num">1</span></div><div class="spacer"></div><button class="leave-btn" id="leave-room-btn">Leave</button></div>
+  <div class="topbar"><div class="logo"> WatchParty</div><div class="room-pill" id="header-room-id"></div><div class="peer-count"> <span id="peer-count-num">1</span></div><div class="spacer"></div><button class="leave-btn" id="leave-room-btn">Leave</button></div>
   <div class="room-layout">
-    <div class="stage"><video id="main-video" autoplay playsinline muted></video><div class="placeholder" id="placeholder">✨ No screen shared</div><div class="stage-top"><div class="stage-label" id="stage-label">No stream</div><button id="fullscreen-btn">⛶</button></div></div>
-    <div class="sidebar"><div class="tabs"><button class="tab-btn active" data-tab="peers">👥 Peers</button><button class="tab-btn" data-tab="chat">💬 Chat <span id="chat-badge">0</span></button></div><div class="panel active" id="peers-panel"></div><div class="panel" id="chat-panel"><div class="chat-messages" id="chat-messages"></div><div class="chat-input"><input id="chat-input" type="text" placeholder="Message..." maxlength="300"><button class="btn btn-secondary" id="send-chat-btn">Send</button></div></div></div>
+    <div class="stage"><video id="main-video" autoplay playsinline muted></video><div class="placeholder" id="placeholder"> No screen shared</div><div class="stage-top"><div class="stage-label" id="stage-label">No stream</div><button id="fullscreen-btn"></button></div></div>
+    <div class="sidebar"><div class="tabs"><button class="tab-btn active" data-tab="peers"> Peers</button><button class="tab-btn" data-tab="chat"> Chat <span id="chat-badge">0</span></button></div><div class="panel active" id="peers-panel"></div><div class="panel" id="chat-panel"><div class="chat-messages" id="chat-messages"></div><div class="chat-input"><input id="chat-input" type="text" placeholder="Message..." maxlength="300"><button class="btn btn-secondary" id="send-chat-btn">Send</button></div></div></div>
   </div>
-  <div class="controls"><button class="ctrl-btn primary" id="share-btn">🖥️ Share Screen</button><button class="ctrl-btn mic-off" id="mute-btn">🎤 Enable Mic</button></div>
+  <div class="controls"><button class="ctrl-btn primary" id="share-btn"> Share Screen</button><button class="ctrl-btn mic-off" id="mute-btn"> Enable Mic</button></div>
 </div>
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script>
   (function(){
-    // ========== CONFIG ==========
+
     const ICE_CONFIG = {
       iceServers: [
         { urls: 'stun:stun.l.google.com:19302' },
@@ -297,7 +297,6 @@
       ]
     };
 
-    // ========== DOM Elements ==========
     const lobbyDiv = document.getElementById('lobby');
     const roomDiv = document.getElementById('room');
     const toastEl = document.getElementById('toast');
@@ -320,7 +319,6 @@
     const peerCountSpan = document.getElementById('peer-count-num');
     const chatBadge = document.getElementById('chat-badge');
 
-    // ========== App State ==========
     let peer = null;
     let toastTimer = null;
     let activeShareLock = false;
@@ -359,7 +357,7 @@
     function addSystemMessage(text) {
       const div = document.createElement('div');
       div.className = 'chat-msg';
-      div.innerHTML = `<div class="chat-msg-text" style="color:#8a93a5; font-style:italic;">🔔 ${escapeHtml(text)}</div>`;
+      div.innerHTML = `<div class="chat-msg-text" style="color:#8a93a5; font-style:italic;"> ${escapeHtml(text)}</div>`;
       chatMessagesDiv.appendChild(div);
       chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
     }
@@ -389,8 +387,7 @@
         }
       }
     }
-    
-    // ----- Media Helpers -----
+
     function callPeerWithScreen(peerId, stream, ownerId, ownerName) {
       if(!stream || peerId === peer?.id) return;
       const p = peersMap.get(peerId);
@@ -436,8 +433,7 @@
       document.getElementById('stage-label').innerText = 'No screen shared';
       if(isHost) broadcastToPeers({ type:'screen_stop', ownerId });
     }
-    
-    // Screen sharing control
+
     async function startScreenShare() {
       if(activeShareLock && activeShareOwner !== peer?.id) { toast("Someone is already sharing screen", 2000); return; }
       if(isSharingScreen) return;
@@ -454,7 +450,7 @@
         document.getElementById('placeholder').style.display = 'none';
         document.getElementById('stage-label').innerText = `${myName}'s screen`;
         shareBtn.classList.add('danger');
-        shareBtn.innerHTML = '🛑 Stop Sharing';
+        shareBtn.innerHTML = ' Stop Sharing';
         for(let [pid] of peersMap.entries()) {
           callPeerWithScreen(pid, stream, peer.id, myName);
         }
@@ -477,7 +473,7 @@
         broadcastToPeers({ type:'screen_stop', ownerId: peer.id });
       }
       shareBtn.classList.remove('danger');
-      shareBtn.innerHTML = '🖥️ Share Screen';
+      shareBtn.innerHTML = ' Share Screen';
     }
     
     async function toggleMic() {
@@ -487,7 +483,7 @@
           myMicStream = stream;
           isMicEnabled = true;
           for(let [pid] of peersMap.entries()) callPeerWithMic(pid, stream, peer.id);
-          muteBtn.innerHTML = '🎤 Disable Mic';
+          muteBtn.innerHTML = ' Disable Mic';
           muteBtn.classList.remove('mic-off');
           muteBtn.style.background = '#3b82f6';
           return;
@@ -503,7 +499,7 @@
           }
         }
         broadcastToPeers({ type:'mic_stop', ownerId: peer.id });
-        muteBtn.innerHTML = '🎤 Enable Mic';
+        muteBtn.innerHTML = ' Enable Mic';
         muteBtn.classList.add('mic-off');
         muteBtn.style.background = '#181e2a';
       } else {
@@ -513,13 +509,12 @@
         }
         isMicEnabled = true;
         for(let [pid] of peersMap.entries()) callPeerWithMic(pid, myMicStream, peer.id);
-        muteBtn.innerHTML = '🎤 Disable Mic';
+        muteBtn.innerHTML = ' Disable Mic';
         muteBtn.classList.remove('mic-off');
         muteBtn.style.background = '#3b82f6';
       }
     }
-    
-    // ----- Incoming Calls handler -----
+
     function onPeerCall(call) {
       const meta = call.metadata || {};
       if(meta.type === 'mic') {
@@ -546,13 +541,13 @@
         call.on('close', () => { stopRemoteMic(ownerId); });
         return;
       }
-      // screen share
+
       call.answer();
       const ownerId = meta.ownerId || call.peer;
       const ownerName = meta.ownerName || 'User';
       call.on('stream', (stream) => {
         if(activeShareLock && activeShareOwner !== ownerId) {
-          toast("⚠️ Another screen share already playing", 1500);
+          toast(" Another screen share already playing", 1500);
           return;
         }
         activeShareLock = true;
@@ -572,13 +567,11 @@
       });
       call.on('close', () => handleRemoteShareStop(ownerId));
     }
-    
-    // ----- Host Migration -----
+
     async function performHostMigration() {
       if(migrationInProgress || isHost || peersMap.size === 0) return;
       migrationInProgress = true;
-      
-      // Select new host: the peer with smallest peerId (deterministic)
+
       const sortedPeers = Array.from(peersMap.keys()).sort();
       const newHostId = sortedPeers[0];
       const newHostInfo = peersMap.get(newHostId);
@@ -588,19 +581,16 @@
         return;
       }
       
-      addSystemMessage(`⚠️ Host left. Migrating to ${newHostInfo.name || 'new host'}...`);
+      addSystemMessage(` Host left. Migrating to ${newHostInfo.name || 'new host'}...`);
       toast("Host migration in progress, reconnecting...", 4000);
-      
-      // Notify all peers about new host
+
       const migrationMsg = { type: 'host_migration', newHostId: newHostId, newHostName: newHostInfo.name, roomSecret: roomSecret };
       broadcastToPeers(migrationMsg);
-      
-      // Reconnect to new host
+
       setTimeout(() => {
-        // Close existing peer connection
+
         if(peer) peer.destroy();
-        
-        // Re-join as non-host pointing to new host
+
         isHost = false;
         peer = new Peer(ICE_CONFIG);
         peer.on('open', async () => {
@@ -616,10 +606,9 @@
         });
       }, 500);
     }
-    
-    // ----- Data channel & authentication (single clean path) -----
+
     function addPeerConnection(peerId, displayName) {
-      // Prevent double registration
+
       if(peersMap.has(peerId) && peersMap.get(peerId).name !== 'Connecting...') return;
       const existing = peersMap.get(peerId) || { dataConn: null, micCalls: new Map() };
       existing.name = displayName;
@@ -628,11 +617,10 @@
       const cardDiv = document.createElement('div');
       cardDiv.className = 'peer-card';
       cardDiv.id = `peer-card-${peerId}`;
-      cardDiv.innerHTML = `<div class="peer-video"></div><div class="peer-meta">🎤 ${escapeHtml(displayName)}</div>`;
+      cardDiv.innerHTML = `<div class="peer-video"></div><div class="peer-meta"> ${escapeHtml(displayName)}</div>`;
       peersPanel.appendChild(cardDiv);
       addSystemMessage(`${displayName} joined`);
-      
-      // Relay active media to new peer (host only)
+
       if(isHost) {
         if(activeShareStream && activeShareOwner) {
           callPeerWithScreen(peerId, activeShareStream, activeShareOwner, activeShareName);
@@ -651,7 +639,7 @@
       
       conn.on('open', () => {
         if(!isIncoming && !isHost) {
-          // Joiner: send hello request
+
           conn.send(JSON.stringify({ type: 'hello', name: myName }));
         }
       });
@@ -659,10 +647,9 @@
       conn.on('data', (raw) => {
         try {
           const msg = JSON.parse(raw);
-          
-          // Only authentication flow
+
           if(msg.type === 'hello' && isHost && !authenticated) {
-            // Host receives join request, send secret
+
             conn.send(JSON.stringify({ type: 'welcome', secret: roomSecret, hostName: myName }));
             return;
           }
@@ -685,8 +672,7 @@
             conn.close();
             return;
           }
-          
-          // Normal messages after auth
+
           if(msg.type === 'chat') {
             addChatMessage(msg.name, msg.text);
             if(isHost) broadcastToPeers(msg, peerId);
@@ -706,14 +692,14 @@
           }
           
           if(msg.type === 'host_migration' && !isHost) {
-            // Received migration signal from old host before it left
+
             if(msg.newHostId === peer?.id) {
-              // I am the new host!
+
               isHost = true;
               roomSecret = msg.roomSecret;
-              addSystemMessage("🎉 You are now the host! The room is stable.");
+              addSystemMessage(" You are now the host! The room is stable.");
               toast("You are now the host", 3000);
-              // Re-establish connections to all peers as host
+
               for(let [pid, p] of peersMap.entries()) {
                 if(pid !== peer?.id && p.dataConn) {
                   if(activeShareStream && activeShareOwner) callPeerWithScreen(pid, activeShareStream, activeShareOwner, activeShareName);
@@ -738,8 +724,7 @@
         stopRemoteMic(peerId);
         if(activeShareOwner === peerId) handleRemoteShareStop(peerId);
         addSystemMessage(`${nameLeft} left`);
-        
-        // Host migration: if host leaves and I'm not host and not already migrating
+
         if(!isHost && peersMap.size > 0 && peerId === currentHostId && !migrationInProgress) {
           performHostMigration();
         }
@@ -751,8 +736,7 @@
         peersMap.get(peerId).dataConn = conn;
       }
     }
-    
-    // ----- Room Lifecycle -----
+
     function normalizeRoomId(raw) { let clean = raw.toUpperCase().replace(/[^A-Z0-9]/g,''); if(clean.length<6) clean = clean.padEnd(6,'X'); return clean.slice(0,3)+'-'+clean.slice(3,6); }
     function getHostPeerId(roomId) { return `HOST_${roomId.replace(/-/g,'')}`; }
     
@@ -768,8 +752,7 @@
       await new Promise((res,rej) => { peer.on('open', res); peer.on('error', rej); });
       peer.on('connection', (conn) => setupDataConnection(conn, true));
       peer.on('call', onPeerCall);
-      
-      // Before unload, notify peers for migration
+
       window.addEventListener('beforeunload', () => {
         if(isHost && peersMap.size > 0) {
           const sorted = Array.from(peersMap.keys()).sort();
@@ -791,7 +774,7 @@
       let rawCode = joinCodeInput.value.trim().toUpperCase();
       currentRoomId = normalizeRoomId(rawCode);
       const hostPeerId = getHostPeerId(currentRoomId);
-      currentHostId = hostPeerId;
+      
       isHost = false;
       peer = new Peer(ICE_CONFIG);
       await new Promise((res,rej) => { peer.on('open', res); peer.on('error', rej); });
@@ -816,8 +799,7 @@
     }
     
     function toggleFullscreen() { const el = document.querySelector('.stage'); if(!document.fullscreenElement) el.requestFullscreen(); else document.exitFullscreen(); }
-    
-    // Event bindings
+
     createBtn.onclick = createRoom;
     joinBtn.onclick = joinRoom;
     leaveBtn.onclick = leaveRoom;
