@@ -1,1770 +1,843 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>WatchParty</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-:root{
-  --bg:#0f1115;
-  --surface:#171a21;
-  --surface2:#1f2430;
-  --border:#2c3442;
-  --accent:#4f8cff;
-  --text:#f5f7fb;
-  --muted:#9aa4b2;
-  --danger:#ff5d73;
-  --success:#22c55e;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:Inter,system-ui,sans-serif;
-  overflow:hidden;
-}
-
-button,input{
-  font-family:inherit;
-}
-
-button{
-  cursor:pointer;
-}
-
-.hidden{
-  display:none !important;
-}
-
-#lobby{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-}
-
-.lobby-wrap{
-  width:100%;
-  max-width:1100px;
-}
-
-.hero{
-  margin-bottom:36px;
-}
-
-.hero h1{
-  font-size:48px;
-  font-weight:700;
-  margin-bottom:10px;
-}
-
-.hero p{
-  color:var(--muted);
-  font-size:15px;
-}
-
-.cards{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:18px;
-}
-
-.card{
-  background:var(--surface);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:24px;
-}
-
-.card h2{
-  font-size:20px;
-  margin-bottom:8px;
-}
-
-.card p{
-  color:var(--muted);
-  margin-bottom:20px;
-  font-size:14px;
-}
-
-.input-group{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-input{
-  width:100%;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  color:var(--text);
-  padding:14px;
-  border-radius:12px;
-  outline:none;
-  font-size:14px;
-}
-
-input:focus{
-  border-color:var(--accent);
-}
-
-.btn{
-  border:none;
-  border-radius:12px;
-  padding:14px;
-  font-size:14px;
-  font-weight:600;
-  transition:.15s;
-}
-
-.btn:hover{
-  opacity:.92;
-}
-
-.btn-primary{
-  background:var(--accent);
-  color:white;
-}
-
-.btn-secondary{
-  background:var(--surface2);
-  color:white;
-  border:1px solid var(--border);
-}
-
-.room-code-box{
-  background:var(--surface2);
-  border:1px dashed var(--border);
-  padding:14px;
-  border-radius:12px;
-  text-align:center;
-  font-size:15px;
-  font-weight:600;
-  letter-spacing:.08em;
-  margin-top:10px;
-}
-
-
-#room{
-  height:100vh;
-  display:none;
-  flex-direction:column;
-}
-
-.topbar{
-  height:64px;
-  background:var(--surface);
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  padding:0 18px;
-  gap:16px;
-  flex-shrink:0;
-}
-
-.logo{
-  font-weight:700;
-  font-size:18px;
-}
-
-.room-pill{
-  background:var(--surface2);
-  border:1px solid var(--border);
-  padding:8px 12px;
-  border-radius:999px;
-  font-size:13px;
-  color:var(--muted);
-}
-
-.peer-count{
-  color:var(--muted);
-  font-size:13px;
-}
-
-.spacer{
-  flex:1;
-}
-
-.leave-btn{
-  background:var(--danger);
-  color:white;
-  border:none;
-  border-radius:10px;
-  padding:10px 14px;
-  font-size:13px;
-}
-
-.room-layout{
-  flex:1;
-  display:flex;
-  min-height:0;
-}
-
-.stage{
-  flex:1;
-  position:relative;
-  background:black;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-#main-video{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
-
-.placeholder{
-  text-align:center;
-  color:var(--muted);
-  padding:20px;
-}
-
-.stage-top{
-  position:absolute;
-  top:14px;
-  left:14px;
-  right:14px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  z-index:10;
-}
-
-.stage-label{
-  background:rgba(0,0,0,.5);
-  backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.08);
-  padding:8px 12px;
-  border-radius:12px;
-  font-size:12px;
-}
-
-#fullscreen-btn{
-  width:42px;
-  height:42px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(0,0,0,.55);
-  color:white;
-  font-size:18px;
-}
-
-.sidebar{
-  width:320px;
-  background:var(--surface);
-  border-left:1px solid var(--border);
-  display:flex;
-  flex-direction:column;
-}
-
-.tabs{
-  display:flex;
-  border-bottom:1px solid var(--border);
-}
-
-.tab-btn{
-  flex:1;
-  background:none;
-  border:none;
-  color:var(--muted);
-  padding:14px;
-  font-weight:600;
-  position:relative;
-}
-
-.tab-btn.active{
-  color:white;
-  background:rgba(255,255,255,.02);
-}
-
-#chat-badge{
-  position:absolute;
-  top:8px;
-  right:20px;
-  background:var(--danger);
-  min-width:18px;
-  height:18px;
-  border-radius:999px;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  font-size:10px;
-  font-weight:700;
-  color:white;
-}
-
-.panel{
-  flex:1;
-  overflow:hidden;
-  display:none;
-}
-
-.panel.active{
-  display:flex;
-  flex-direction:column;
-}
-
-#peers-panel{
-  padding:14px;
-  overflow-y:auto;
-  gap:12px;
-}
-
-.peer-card{
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:14px;
-  overflow:hidden;
-}
-
-.peer-video{
-  height:140px;
-  background:black;
-}
-
-.peer-video video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-}
-
-.peer-meta{
-  padding:12px;
-  font-size:13px;
-}
-
-.chat-messages{
-  flex:1;
-  overflow-y:auto;
-  padding:14px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.chat-msg{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-}
-
-.chat-msg-header{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
-.chat-msg-author{
-  font-size:13px;
-  font-weight:600;
-}
-
-.chat-msg-time{
-  color:var(--muted);
-  font-size:11px;
-}
-
-.chat-msg-text{
-  font-size:14px;
-  line-height:1.4;
-  word-break:break-word;
-}
-
-.chat-input{
-  border-top:1px solid var(--border);
-  padding:12px;
-  display:flex;
-  gap:10px;
-}
-
-.chat-input input{
-  flex:1;
-}
-
-.controls{
-  height:72px;
-  border-top:1px solid var(--border);
-  background:var(--surface);
-  display:flex;
-  align-items:center;
-  padding:0 18px;
-  gap:12px;
-}
-
-.ctrl-btn{
-  border:none;
-  border-radius:12px;
-  padding:12px 16px;
-  background:var(--surface2);
-  color:white;
-  font-size:13px;
-  font-weight:600;
-}
-
-.ctrl-btn.primary{
-  background:var(--accent);
-}
-
-.ctrl-btn.danger{
-  background:var(--danger);
-}
-
-.ctrl-btn.active{
-  background:var(--danger);
-}
-
-#toast{
-  position:fixed;
-  bottom:24px;
-  left:50%;
-  transform:translateX(-50%);
-  background:var(--surface);
-  border:1px solid var(--border);
-  padding:12px 18px;
-  border-radius:14px;
-  display:none;
-  z-index:999;
-}
-
-@media(max-width:900px){
-
-  .cards{
-    grid-template-columns:1fr;
-  }
-
-  .room-layout{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-    height:42vh;
-    border-left:none;
-    border-top:1px solid var(--border);
-  }
-
-  .stage{
-    height:58vh;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>WatchParty · Resilient P2P Stream</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0c10;
+      color: #eef2ff;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    :root {
+      --bg: #0a0c10;
+      --surface: #11161f;
+      --surface2: #181e2a;
+      --border: #29303e;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --danger: #f43f5e;
+      --success: #10b981;
+      --muted: #8592a8;
+    }
+    .hidden { display: none !important; }
+    #lobby {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at 20% 30%, #0f131c, #080b10);
+    }
+    .lobby-wrap { max-width: 1100px; width: 100%; }
+    .hero { text-align: center; margin-bottom: 2rem; }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #8ab3ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      padding: 1.8rem;
+      backdrop-filter: blur(2px);
+    }
+    .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.75rem; }
+    input, .btn {
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 0.85rem 1rem;
+      color: white;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+    .btn {
+      border: none;
+      padding: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); transform: scale(0.98); }
+    .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: white; }
+    .room-code-box {
+      background: var(--surface2);
+      border: 1px dashed var(--border);
+      padding: 0.75rem;
+      text-align: center;
+      border-radius: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+    }
+    #room {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+    .topbar {
+      height: 60px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.2rem;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+    .logo { font-weight: 800; font-size: 1.2rem; background: linear-gradient(120deg, #fff, #6ea4ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .room-pill { background: var(--surface2); padding: 0.3rem 1rem; border-radius: 2rem; font-family: monospace; font-weight: 600; font-size: 0.8rem; }
+    .peer-count { font-size: 0.8rem; color: var(--muted); }
+    .spacer { flex: 1; }
+    .leave-btn { background: var(--danger); border: none; padding: 0.5rem 1rem; border-radius: 1rem; color: white; font-weight: 600; cursor: pointer; }
+    .room-layout { flex: 1; display: flex; min-height: 0; }
+    .stage {
+      flex: 1;
+      background: #000;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #main-video { width: 100%; height: 100%; object-fit: contain; }
+    .placeholder {
+      position: absolute;
+      color: var(--muted);
+      background: rgba(0,0,0,0.6);
+      padding: 0.7rem 1.5rem;
+      border-radius: 2rem;
+      backdrop-filter: blur(8px);
+      font-size: 0.9rem;
+    }
+    .stage-top {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      right: 1rem;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .stage-label, #fullscreen-btn { pointer-events: auto; }
+    .stage-label {
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      border: 0.5px solid rgba(255,255,255,0.2);
+    }
+    #fullscreen-btn {
+      background: rgba(0,0,0,0.6);
+      border: none;
+      color: white;
+      width: 38px;
+      height: 38px;
+      border-radius: 1rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .sidebar {
+      width: 320px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+    }
+    .tab-btn.active { color: white; background: rgba(255,255,255,0.03); }
+    #chat-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 1.2rem;
+      background: var(--danger);
+      border-radius: 20px;
+      min-width: 18px;
+      height: 18px;
+      font-size: 0.7rem;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .panel { flex: 1; overflow: hidden; display: none; }
+    .panel.active { display: flex; flex-direction: column; }
+    #peers-panel { padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.8rem; }
+    .peer-card {
+      background: var(--surface2);
+      border-radius: 1.2rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .peer-video { height: 120px; background: #000; }
+    .peer-meta { padding: 0.7rem; font-size: 0.8rem; font-weight: 500; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .chat-msg-header { display: flex; gap: 0.6rem; align-items: baseline; margin-bottom: 0.2rem; }
+    .chat-msg-author { font-weight: 700; font-size: 0.8rem; }
+    .chat-msg-time { font-size: 0.65rem; color: var(--muted); }
+    .chat-msg-text { word-break: break-word; line-height: 1.4; font-size: 0.85rem; }
+    .chat-input {
+      border-top: 1px solid var(--border);
+      padding: 0.8rem;
+      display: flex;
+      gap: 0.6rem;
+    }
+    .controls {
+      height: 70px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.2rem;
+      gap: 1rem;
+    }
+    .ctrl-btn {
+      background: var(--surface2);
+      border: none;
+      border-radius: 1.2rem;
+      padding: 0.6rem 1.2rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+    }
+    .ctrl-btn.primary { background: var(--accent); }
+    .ctrl-btn.danger { background: var(--danger); }
+    .ctrl-btn.mic-off { background: var(--surface2); border: 1px solid var(--border); }
+    #toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e2432;
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1.2rem;
+      border-radius: 3rem;
+      font-size: 0.8rem;
+      z-index: 1000;
+      display: none;
+      white-space: nowrap;
+    }
+    @media (max-width: 780px) {
+      .room-layout { flex-direction: column; }
+      .sidebar { width: 100%; height: 38%; border-top: 1px solid var(--border); }
+      .stage { height: 62%; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
-
 <body>
-
-
 
 <div id="lobby">
   <div class="lobby-wrap">
-
-    <div class="hero">
-      <h1>WatchParty</h1>
-      <p>Peer-to-peer screen sharing and watch parties.</p>
-    </div>
-
+    <div class="hero"><h1>WatchParty</h1><p>Resilient P2P · Screen share + voice · Host migration</p></div>
     <div class="cards">
-
-      <div class="card">
-        <h2>Create Room</h2>
-        <p>Host a room and invite friends.</p>
-
-        <div class="input-group">
-          <input id="host-name" type="text" placeholder="Your name" />
-          <button class="btn btn-primary" id="create-btn" onclick="createRoom()">
-            Create Room
-          </button>
-
-          <div id="room-id-display" class="room-code-box hidden"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Join Room</h2>
-        <p>Enter a room code to connect.</p>
-
-        <div class="input-group">
-          <input id="join-name" type="text" placeholder="Your name" />
-          <input id="join-code" type="text" placeholder="Room code" />
-
-          <button class="btn btn-secondary" id="join-btn" onclick="joinRoom()">
-            Join Room
-          </button>
-        </div>
-      </div>
-
+      <div class="card"><h2>✨ Create Room</h2><p>Host a private watch party.</p><div class="input-group"><input id="host-name" placeholder="Your name" maxlength="32"><button class="btn btn-primary" id="create-btn">Create Room</button><div id="room-id-display" class="room-code-box hidden"></div></div></div>
+      <div class="card"><h2>🔗 Join Room</h2><p>Enter 6‑character code (ABC‑123).</p><div class="input-group"><input id="join-name" placeholder="Your name" maxlength="32"><input id="join-code" placeholder="Room code"><button class="btn btn-secondary" id="join-btn">Join Room</button></div></div>
     </div>
-
   </div>
 </div>
-
-
 
 <div id="room">
-
-  <div class="topbar">
-    <div class="logo">WatchParty</div>
-
-    <div class="room-pill" id="header-room-id"></div>
-
-    <div class="peer-count">
-      Participants:
-      <span id="peer-count-num">1</span>
-    </div>
-
-    <div class="spacer"></div>
-
-    <button class="leave-btn" onclick="leaveRoom()">
-      Leave
-    </button>
-  </div>
-
+  <div class="topbar"><div class="logo">🎬 WatchParty</div><div class="room-pill" id="header-room-id"></div><div class="peer-count">👥 <span id="peer-count-num">1</span></div><div class="spacer"></div><button class="leave-btn" id="leave-room-btn">Leave</button></div>
   <div class="room-layout">
-
-    <div class="stage">
-
-      <video id="main-video" autoplay playsinline></video>
-
-      <div class="placeholder" id="placeholder">
-        Nobody is sharing their screen.
-      </div>
-
-      <div class="stage-top">
-        <div class="stage-label" id="stage-label">
-          No screen shared
-        </div>
-
-        <button id="fullscreen-btn" onclick="toggleFullscreen()">
-          ⛶
-        </button>
-      </div>
-
-    </div>
-
-    <div class="sidebar">
-
-      <div class="tabs">
-
-        <button class="tab-btn active" onclick="switchTab('peers')">
-          Peers
-        </button>
-
-        <button class="tab-btn" onclick="switchTab('chat')">
-          Chat
-          <span id="chat-badge">0</span>
-        </button>
-
-      </div>
-
-      <div class="panel active" id="peers-panel"></div>
-
-      <div class="panel" id="chat-panel">
-
-        <div class="chat-messages" id="chat-messages"></div>
-
-        <div class="chat-input">
-          <input
-            id="chat-input"
-            type="text"
-            placeholder="Message..."
-            maxlength="200"
-          />
-
-          <button class="btn btn-secondary" onclick="sendChat()">
-            Send
-          </button>
-        </div>
-
-      </div>
-
-    </div>
-
+    <div class="stage"><video id="main-video" autoplay playsinline muted></video><div class="placeholder" id="placeholder">✨ No screen shared</div><div class="stage-top"><div class="stage-label" id="stage-label">No stream</div><button id="fullscreen-btn">⛶</button></div></div>
+    <div class="sidebar"><div class="tabs"><button class="tab-btn active" data-tab="peers">👥 Peers</button><button class="tab-btn" data-tab="chat">💬 Chat <span id="chat-badge">0</span></button></div><div class="panel active" id="peers-panel"></div><div class="panel" id="chat-panel"><div class="chat-messages" id="chat-messages"></div><div class="chat-input"><input id="chat-input" type="text" placeholder="Message..." maxlength="300"><button class="btn btn-secondary" id="send-chat-btn">Send</button></div></div></div>
   </div>
-
-  <div class="controls">
-
-    <button
-      class="ctrl-btn primary"
-      id="share-btn"
-      onclick="toggleScreenShare()"
-    >
-      Share Screen
-    </button>
-
-    <button
-      class="ctrl-btn"
-      id="mute-btn"
-      onclick="toggleMute()"
-    >
-      Mic Off
-    </button>
-
-  </div>
-
+  <div class="controls"><button class="ctrl-btn primary" id="share-btn">🖥️ Share Screen</button><button class="ctrl-btn mic-off" id="mute-btn">🎤 Enable Mic</button></div>
 </div>
-
 <div id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
 <script>
-const state = {
-  myName:'',
-  roomId:'',
-  peers:{},
-  participants:new Set(),
-  screenStream:null,
-  micStream:null,
-  remoteMicStreams:{},
-  activeShareOwner:null,
-  activeShareName:'',
-  activeShareStream:null,
-  isSharing:false,
-  micEnabled:false,
-  activeTab:'peers',
-  unreadCount:0,
-  loading:false
-};
+  (function(){
+    // ========== CONFIG ==========
+    const ICE_CONFIG = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' }
+      ]
+    };
 
-let peer = null;
-let toastTimer;
+    // ========== DOM Elements ==========
+    const lobbyDiv = document.getElementById('lobby');
+    const roomDiv = document.getElementById('room');
+    const toastEl = document.getElementById('toast');
+    const mainVideo = document.getElementById('main-video');
+    const shareBtn = document.getElementById('share-btn');
+    const muteBtn = document.getElementById('mute-btn');
+    const peersPanel = document.getElementById('peers-panel');
+    const chatMessagesDiv = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendChatBtn = document.getElementById('send-chat-btn');
+    const leaveBtn = document.getElementById('leave-room-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const createBtn = document.getElementById('create-btn');
+    const joinBtn = document.getElementById('join-btn');
+    const hostNameInput = document.getElementById('host-name');
+    const joinNameInput = document.getElementById('join-name');
+    const joinCodeInput = document.getElementById('join-code');
+    const roomIdDisplay = document.getElementById('room-id-display');
+    const headerRoomId = document.getElementById('header-room-id');
+    const peerCountSpan = document.getElementById('peer-count-num');
+    const chatBadge = document.getElementById('chat-badge');
 
+    // ========== App State ==========
+    let peer = null;
+    let toastTimer = null;
+    let activeShareLock = false;
+    let isHost = false;
+    let roomSecret = null;
+    let migrationInProgress = false;
+    let currentHostId = null;
+    const peersMap = new Map();            // peerId -> { dataConn, name, screenCall, micCalls:Map }
+    const remoteMicStreams = new Map();    // ownerId -> MediaStream
+    let myName = '';
+    let currentRoomId = '';
+    
+    let myScreenStream = null;
+    let isSharingScreen = false;
+    let myMicStream = null;
+    let isMicEnabled = false;
+    
+    let activeShareOwner = null;
+    let activeShareName = '';
+    let activeShareStream = null;
+    
+    let currentTab = 'peers';
+    let unreadCount = 0;
 
-
-function toast(msg,dur=2500){
-  const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.style.display='block';
-
-  clearTimeout(toastTimer);
-
-  toastTimer=setTimeout(()=>{
-    el.style.display='none';
-  },dur);
-}
-
-function genRoomId(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id='';
-
-  for(let i=0;i<6;i++){
-    if(i===3) id+='-';
-    id+=chars[Math.floor(Math.random()*chars.length)];
-  }
-
-  return id;
-}
-
-
-
-function loadPeerJS(){
-  return new Promise(resolve=>{
-    if(window.Peer){
-      resolve();
-      return;
+    function toast(msg, dur = 3000) {
+      toastEl.textContent = msg;
+      toastEl.style.display = 'block';
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, dur);
     }
-
-    const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js';
-    s.onload=resolve;
-
-    document.head.appendChild(s);
-  });
-}
-
-async function initPeer(customId=null){
-
-  await loadPeerJS();
-
-  return new Promise((resolve,reject)=>{
-
-    peer = customId
-      ? new Peer(customId)
-      : new Peer();
-
-    peer.on('open',id=>{
-      resolve(id);
-    });
-
-    peer.on('error',err=>{
-      reject(err);
-    });
-
-    peer.on('disconnected',()=>{
-      toast('Connection lost. Reconnecting...');
-
-      try{
-        peer.reconnect();
-      }catch{
-        setTimeout(()=>{
-          location.reload();
-        },2000);
+    
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])).substring(0, 300); }
+    
+    function updatePeerCountUI() { peerCountSpan.innerText = peersMap.size + 1; }
+    
+    function addSystemMessage(text) {
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      div.innerHTML = `<div class="chat-msg-text" style="color:#8a93a5; font-style:italic;">🔔 ${escapeHtml(text)}</div>`;
+      chatMessagesDiv.appendChild(div);
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+    }
+    
+    function addChatMessage(author, text, isSystem = false) {
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      const time = new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+      if(isSystem) {
+        div.innerHTML = `<div class="chat-msg-text" style="color:#aaa;">${escapeHtml(text)}</div>`;
+      } else {
+        div.innerHTML = `<div class="chat-msg-header"><span class="chat-msg-author">${escapeHtml(author)}</span><span class="chat-msg-time">${time}</span></div><div class="chat-msg-text">${escapeHtml(text)}</div>`;
       }
-    });
-
-    peer.on('close',()=>{
-      toast('Connection closed');
-    });
-
-    peer.on('call',call=>{
-      handleMediaCall(call);
-    });
-
-    peer.on('connection',conn=>{
-      setupDataConn(conn);
-    });
-
-  });
-
-}
-
-
-
-function showRoom(){
-  document.getElementById('lobby').style.display='none';
-  document.getElementById('room').style.display='flex';
-
-  document.getElementById('header-room-id').textContent=state.roomId;
-}
-
-function updatePeerCount(){
-  document.getElementById('peer-count-num').textContent =
-    state.participants.size + 1;
-}
-
-function isHost(){
-  return peer?.id?.startsWith('ROOM-');
-}
-
-function broadcastData(msg,exceptPeerId=null){
-  for(const [peerId,p] of Object.entries(state.peers)){
-    if(peerId!==exceptPeerId && p.dataConn?.open){
-      p.dataConn.send(JSON.stringify(msg));
+      chatMessagesDiv.appendChild(div);
+      chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+      if(currentTab !== 'chat') {
+        unreadCount++;
+        chatBadge.style.display = 'flex';
+        chatBadge.innerText = unreadCount;
+      }
     }
-  }
-}
-
-
-
-async function createRoom(){
-
-  if(state.loading) return;
-
-  state.loading=true;
-
-  const btn=document.getElementById('create-btn');
-
-  btn.disabled=true;
-  btn.textContent='Creating...';
-
-  try{
-
-    state.myName =
-      document.getElementById('host-name').value.trim() || 'Host';
-
-    const roomId=genRoomId();
-
-    const peerId='ROOM-'+roomId.replace('-','');
-
-    await initPeer(peerId);
-
-    state.roomId=roomId;
-
-    history.replaceState(null,'',`?room=${roomId}`);
-
-    document.getElementById('room-id-display')
-      .classList.remove('hidden');
-
-    document.getElementById('room-id-display')
-      .textContent=roomId;
-
-    showRoom();
-
-    toast('Room created');
-
-  }catch(err){
-    toast('Failed to create room');
-  }
-
-  btn.disabled=false;
-  btn.textContent='Create Room';
-
-  state.loading=false;
-}
-
-
-
-async function joinRoom(){
-
-  if(state.loading) return;
-
-  state.loading=true;
-
-  const btn=document.getElementById('join-btn');
-
-  btn.disabled=true;
-  btn.textContent='Connecting...';
-
-  try{
-
-    state.myName =
-      document.getElementById('join-name').value.trim() || 'Guest';
-
-    state.roomId =
-      document.getElementById('join-code')
-        .value
-        .trim()
-        .toUpperCase();
-
-    await initPeer();
-
-    const hostId='ROOM-'+state.roomId.replace('-','');
-
-    const conn=peer.connect(hostId,{
-      reliable:true
-    });
-
-    setupDataConn(conn);
-
-    conn.on('open',()=>{
-      showRoom();
-      toast('Connected');
-    });
-
-  }catch(err){
-    toast('Connection failed');
-  }
-
-  btn.disabled=false;
-  btn.textContent='Join Room';
-
-  state.loading=false;
-}
-
-
-
-function setupDataConn(conn){
-
-  const peerId=conn.peer;
-
-  conn.on('open',()=>{
-
-    conn.send(JSON.stringify({
-      type:'hello',
-      name:state.myName
-    }));
-
-  });
-
-  conn.on('data',raw=>{
-
-    try{
-
-      const msg=JSON.parse(raw);
-
-      if(msg.type==='hello'){
-
-        state.participants.add(peerId);
-
-        updatePeerCount();
-
-        addPeerCard(peerId,msg.name);
-
-        callPeerWithActiveShare(peerId);
-        callPeerWithActiveMic(peerId);
-
-        if(isHost()){
-          relayActiveMicsToPeer(peerId);
+    
+    function broadcastToPeers(msg, excludePeerId = null) {
+      for(let [pid, p] of peersMap.entries()) {
+        if(pid !== excludePeerId && p.dataConn && p.dataConn.open) {
+          p.dataConn.send(JSON.stringify(msg));
         }
-
       }
-
-      if(msg.type==='chat'){
-
-        addChatMsg(
-          msg.name,
-          msg.text
-        );
-
-      }
-
-      if(msg.type==='screen-stop'){
-
-        handleRemoteShareStop(msg.ownerId || peerId);
-
-        if(isHost()){
-          broadcastData(msg,peerId);
+    }
+    
+    // ----- Media Helpers -----
+    function callPeerWithScreen(peerId, stream, ownerId, ownerName) {
+      if(!stream || peerId === peer?.id) return;
+      const p = peersMap.get(peerId);
+      if(!p) return;
+      if(p.screenCall) p.screenCall.close();
+      const call = peer.call(peerId, stream, { metadata: { type:'screen', ownerId, ownerName } });
+      p.screenCall = call;
+      call.on('close', () => { if(p.screenCall === call) p.screenCall = null; });
+    }
+    
+    function callPeerWithMic(peerId, stream, ownerId) {
+      if(!stream || peerId === peer?.id) return;
+      const p = peersMap.get(peerId);
+      if(!p) return;
+      if(!p.micCalls) p.micCalls = new Map();
+      if(p.micCalls.has(ownerId)) p.micCalls.get(ownerId).close();
+      const call = peer.call(peerId, stream, { metadata: { type:'mic', ownerId } });
+      p.micCalls.set(ownerId, call);
+      call.on('close', () => p.micCalls.delete(ownerId));
+      return call;
+    }
+    
+    function stopRemoteMic(ownerId) {
+      const stream = remoteMicStreams.get(ownerId);
+      if(stream) { stream.getTracks().forEach(t => t.stop()); remoteMicStreams.delete(ownerId); }
+      for(let [pid, p] of peersMap.entries()) {
+        if(p.micCalls && p.micCalls.has(ownerId)) {
+          p.micCalls.get(ownerId).close();
+          p.micCalls.delete(ownerId);
         }
-
       }
-
-      if(msg.type==='mic-stop'){
-
-        handleRemoteMicStop(msg.ownerId || peerId);
-
-        if(isHost()){
-          broadcastData(msg,peerId);
+      const audioEl = document.getElementById(`remote-audio-${ownerId.replace(/[^a-z0-9]/gi,'')}`);
+      if(audioEl) { audioEl.srcObject = null; audioEl.remove(); }
+    }
+    
+    function handleRemoteShareStop(ownerId) {
+      if(activeShareOwner !== ownerId) return;
+      activeShareLock = false;
+      activeShareOwner = null;
+      activeShareStream = null;
+      mainVideo.srcObject = null;
+      document.getElementById('placeholder').style.display = 'block';
+      document.getElementById('stage-label').innerText = 'No screen shared';
+      if(isHost) broadcastToPeers({ type:'screen_stop', ownerId });
+    }
+    
+    // Screen sharing control
+    async function startScreenShare() {
+      if(activeShareLock && activeShareOwner !== peer?.id) { toast("Someone is already sharing screen", 2000); return; }
+      if(isSharingScreen) return;
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        myScreenStream = stream;
+        isSharingScreen = true;
+        activeShareLock = true;
+        activeShareOwner = peer.id;
+        activeShareName = myName;
+        activeShareStream = stream;
+        mainVideo.srcObject = stream;
+        mainVideo.muted = true;
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('stage-label').innerText = `${myName}'s screen`;
+        shareBtn.classList.add('danger');
+        shareBtn.innerHTML = '🛑 Stop Sharing';
+        for(let [pid] of peersMap.entries()) {
+          callPeerWithScreen(pid, stream, peer.id, myName);
         }
-
+        stream.getVideoTracks()[0]?.addEventListener('ended', () => stopScreenShare());
+      } catch(e) { toast("Screen share cancelled"); }
+    }
+    
+    function stopScreenShare() {
+      if(!myScreenStream) return;
+      myScreenStream.getTracks().forEach(t => t.stop());
+      myScreenStream = null;
+      isSharingScreen = false;
+      if(activeShareOwner === peer?.id) {
+        activeShareLock = false;
+        activeShareOwner = null;
+        activeShareStream = null;
+        mainVideo.srcObject = null;
+        document.getElementById('placeholder').style.display = 'block';
+        document.getElementById('stage-label').innerText = 'No screen shared';
+        broadcastToPeers({ type:'screen_stop', ownerId: peer.id });
       }
-
-    }catch{}
-
-  });
-
-  conn.on('close',()=>{
-
-    state.participants.delete(peerId);
-
-    updatePeerCount();
-
-    const card=document.getElementById(
-      'peer-card-'+peerId
-    );
-
-    if(card) card.remove();
-
-    handleRemoteMicStop(peerId);
-
-    if(isHost()){
-      broadcastData({
-        type:'mic-stop',
-        ownerId:peerId
-      },peerId);
+      shareBtn.classList.remove('danger');
+      shareBtn.innerHTML = '🖥️ Share Screen';
     }
-
-  });
-
-  state.peers[peerId]={dataConn:conn};
-}
-
-
-
-function addPeerCard(id,name){
-
-  if(document.getElementById('peer-card-'+id)) return;
-
-  const panel=document.getElementById('peers-panel');
-
-  const card=document.createElement('div');
-
-  card.className='peer-card';
-  card.id='peer-card-'+id;
-
-  card.innerHTML=`
-    <div class="peer-video"></div>
-    <div class="peer-meta">${name}</div>
-  `;
-
-  panel.appendChild(card);
-}
-
-
-
-function addChatMsg(author,text,isSystem=false){
-
-  const box=document.getElementById('chat-messages');
-
-  const div=document.createElement('div');
-
-  div.className='chat-msg';
-
-  const now=new Date();
-
-  const t=
-    now.getHours().toString().padStart(2,'0')+
-    ':'+
-    now.getMinutes().toString().padStart(2,'0');
-
-  if(isSystem){
-
-    const sys=document.createElement('div');
-
-    sys.className='chat-msg-text';
-
-    sys.textContent=text;
-
-    div.appendChild(sys);
-
-  }else{
-
-    const header=document.createElement('div');
-
-    header.className='chat-msg-header';
-
-    const authorEl=document.createElement('span');
-
-    authorEl.className='chat-msg-author';
-
-    authorEl.textContent=author;
-
-    const time=document.createElement('span');
-
-    time.className='chat-msg-time';
-
-    time.textContent=t;
-
-    header.appendChild(authorEl);
-    header.appendChild(time);
-
-    const msg=document.createElement('div');
-
-    msg.className='chat-msg-text';
-
-    msg.textContent=text;
-
-    div.appendChild(header);
-    div.appendChild(msg);
-
-  }
-
-  box.appendChild(div);
-
-  box.scrollTop=box.scrollHeight;
-
-  handleUnreadChat();
-}
-
-function sendChat(){
-
-  const input=document.getElementById('chat-input');
-
-  const text=input.value.trim();
-
-  if(!text) return;
-
-  input.value='';
-
-  addChatMsg(state.myName,text);
-
-  for(const [,p] of Object.entries(state.peers)){
-
-    if(p.dataConn?.open){
-
-      p.dataConn.send(JSON.stringify({
-        type:'chat',
-        name:state.myName,
-        text
-      }));
-
-    }
-
-  }
-
-}
-
-
-
-function switchTab(tab){
-
-  state.activeTab=tab;
-
-  document.querySelectorAll('.tab-btn')
-    .forEach(b=>b.classList.remove('active'));
-
-  if(tab==='peers'){
-    document.querySelectorAll('.tab-btn')[0]
-      .classList.add('active');
-  }else{
-    document.querySelectorAll('.tab-btn')[1]
-      .classList.add('active');
-  }
-
-  document.getElementById('peers-panel')
-    .classList.toggle('active',tab==='peers');
-
-  document.getElementById('chat-panel')
-    .classList.toggle('active',tab==='chat');
-
-  if(tab==='chat'){
-    state.unreadCount=0;
-    updateChatBadge();
-  }
-
-}
-
-function handleUnreadChat(){
-
-  if(state.activeTab!=='chat'){
-
-    state.unreadCount++;
-
-    updateChatBadge();
-
-  }
-
-}
-
-function updateChatBadge(){
-
-  const badge=document.getElementById('chat-badge');
-
-  if(state.unreadCount>0){
-
-    badge.style.display='flex';
-
-    badge.textContent=state.unreadCount;
-
-  }else{
-
-    badge.style.display='none';
-
-  }
-
-}
-
-
-
-function setMainVideo(stream,label){
-
-  const v=document.getElementById('main-video');
-
-  v.srcObject=stream;
-
-  v.play().catch(()=>{
-    if(stream?.getAudioTracks().length){
-      toast('Click the shared video to enable audio');
-    }
-  });
-
-  document.getElementById('placeholder')
-    .style.display='none';
-
-  document.getElementById('stage-label')
-    .textContent=label;
-
-}
-
-function clearMainVideo(){
-
-  const v=document.getElementById('main-video');
-
-  v.srcObject=null;
-
-  document.getElementById('placeholder')
-    .style.display='block';
-
-  document.getElementById('stage-label')
-    .textContent='No screen shared';
-
-}
-
-function setActiveShare(ownerId,ownerName,stream){
-
-  state.activeShareOwner=ownerId;
-  state.activeShareName=ownerName || 'Someone';
-  state.activeShareStream=stream;
-
-  document.getElementById('main-video').muted = ownerId===peer?.id;
-
-  setMainVideo(
-    stream,
-    `${state.activeShareName}'s screen`
-  );
-
-}
-
-function clearActiveShare(ownerId=null){
-
-  if(ownerId && state.activeShareOwner!==ownerId) return;
-
-  state.activeShareOwner=null;
-  state.activeShareName='';
-  state.activeShareStream=null;
-
-  clearMainVideo();
-
-}
-
-function closeCall(call){
-
-  try{
-    call?.close();
-  }catch{}
-
-}
-
-function screenMetadata(ownerId=peer.id,ownerName=state.myName){
-
-  return {
-    type:'screen',
-    ownerId,
-    ownerName
-  };
-
-}
-
-function micMetadata(ownerId=peer.id,ownerName=state.myName){
-
-  return {
-    type:'mic',
-    ownerId,
-    ownerName
-  };
-
-}
-
-function callPeerWithStream(peerId,stream,metadata){
-
-  if(!stream || peerId===peer.id) return null;
-
-  const p=state.peers[peerId];
-
-  if(!p) return null;
-
-  closeCall(p.call);
-
-  const call=peer.call(peerId,stream,{metadata});
-
-  p.call=call;
-
-  call.on('close',()=>{
-    if(p.call===call) p.call=null;
-  });
-
-  call.on('error',()=>{
-    if(p.call===call) p.call=null;
-  });
-
-  return call;
-
-}
-
-function getPeerState(peerId){
-
-  const p=state.peers[peerId];
-
-  if(!p) return null;
-
-  if(!p.micCalls) p.micCalls={};
-
-  return p;
-
-}
-
-function callPeerWithMic(peerId,stream,metadata=micMetadata()){
-
-  if(!stream || peerId===peer.id) return null;
-
-  const p=getPeerState(peerId);
-
-  if(!p) return null;
-
-  const ownerId=metadata.ownerId || peer.id;
-
-  closeCall(p.micCalls[ownerId]);
-
-  const call=peer.call(peerId,stream,{metadata});
-
-  p.micCalls[ownerId]=call;
-
-  call.on('close',()=>{
-    if(p.micCalls[ownerId]===call){
-      delete p.micCalls[ownerId];
-    }
-  });
-
-  call.on('error',()=>{
-    if(p.micCalls[ownerId]===call){
-      delete p.micCalls[ownerId];
-    }
-  });
-
-  return call;
-
-}
-
-function callPeerWithActiveShare(peerId){
-
-  if(state.screenStream){
-    callPeerWithStream(
-      peerId,
-      state.screenStream,
-      screenMetadata()
-    );
-    return;
-  }
-
-  if(isHost() && state.activeShareStream){
-    callPeerWithStream(
-      peerId,
-      state.activeShareStream,
-      screenMetadata(
-        state.activeShareOwner,
-        state.activeShareName
-      )
-    );
-  }
-
-}
-
-function callPeerWithActiveMic(peerId){
-
-  if(state.micEnabled && state.micStream){
-    callPeerWithMic(
-      peerId,
-      state.micStream,
-      micMetadata()
-    );
-  }
-
-}
-
-function relayShareToPeers(stream,metadata,exceptPeerId){
-
-  if(!isHost()) return;
-
-  for(const peerId of Object.keys(state.peers)){
-    if(peerId!==exceptPeerId){
-      callPeerWithStream(peerId,stream,metadata);
-    }
-  }
-
-}
-
-function relayMicToPeers(stream,metadata,exceptPeerId){
-
-  if(!isHost()) return;
-
-  for(const peerId of Object.keys(state.peers)){
-    if(peerId!==exceptPeerId){
-      callPeerWithMic(peerId,stream,metadata);
-    }
-  }
-
-}
-
-function relayActiveMicsToPeer(peerId){
-
-  if(!isHost()) return;
-
-  for(const [ownerId,stream] of Object.entries(state.remoteMicStreams)){
-    callPeerWithMic(
-      peerId,
-      stream,
-      micMetadata(ownerId)
-    );
-  }
-
-}
-
-function handleMediaCall(call){
-
-  const metadata=call.metadata || {};
-
-  if(metadata.type==='mic'){
-    handleMicCall(call);
-    return;
-  }
-
-  const ownerId=metadata.ownerId || call.peer;
-  const ownerName=metadata.ownerName || call.peer;
-
-  call.answer();
-
-  call.on('stream',stream=>{
-
-    setActiveShare(ownerId,ownerName,stream);
-
-    stream.getVideoTracks().forEach(track=>{
-      track.addEventListener('ended',()=>{
-        handleRemoteShareStop(ownerId);
-      });
-    });
-
-    relayShareToPeers(
-      stream,
-      screenMetadata(ownerId,ownerName),
-      call.peer
-    );
-
-  });
-
-  call.on('close',()=>{
-    handleRemoteShareStop(ownerId);
-  });
-
-  call.on('error',()=>{
-    handleRemoteShareStop(ownerId);
-  });
-
-}
-
-function micElementId(ownerId){
-
-  return 'remote-mic-'+ownerId.replace(/[^a-z0-9_-]/gi,'-');
-
-}
-
-function setRemoteMic(ownerId,stream){
-
-  if(ownerId===peer?.id) return;
-
-  state.remoteMicStreams[ownerId]=stream;
-
-  let audio=document.getElementById(micElementId(ownerId));
-
-  if(!audio){
-    audio=document.createElement('audio');
-    audio.id=micElementId(ownerId);
-    audio.autoplay=true;
-    audio.playsInline=true;
-    document.body.appendChild(audio);
-  }
-
-  audio.srcObject=stream;
-
-  audio.play().catch(()=>{
-    toast('Click anywhere to enable mic audio');
-  });
-
-}
-
-function removeRemoteMic(ownerId){
-
-  delete state.remoteMicStreams[ownerId];
-
-  const audio=document.getElementById(micElementId(ownerId));
-
-  if(audio){
-    audio.srcObject=null;
-    audio.remove();
-  }
-
-}
-
-function closeMicCallsForOwner(ownerId){
-
-  for(const p of Object.values(state.peers)){
-    if(p.micCalls?.[ownerId]){
-      closeCall(p.micCalls[ownerId]);
-      delete p.micCalls[ownerId];
-    }
-  }
-
-}
-
-function stopMicSharing(){
-
-  if(!state.micEnabled) return;
-
-  state.micEnabled=false;
-
-  if(state.micStream){
-    state.micStream
-      .getAudioTracks()
-      .forEach(track=>{
-        track.enabled=false;
-      });
-  }
-
-  broadcastData({
-    type:'mic-stop',
-    ownerId:peer.id
-  });
-
-  closeMicCallsForOwner(peer.id);
-
-  const btn=document.getElementById('mute-btn');
-
-  if(btn){
-    btn.textContent='Mic Off';
-    btn.classList.add('active');
-  }
-
-}
-
-function handleMicCall(call){
-
-  const metadata=call.metadata || {};
-  const ownerId=metadata.ownerId || call.peer;
-
-  call.answer();
-
-  call.on('stream',stream=>{
-    setRemoteMic(ownerId,stream);
-    relayMicToPeers(stream,micMetadata(ownerId),call.peer);
-  });
-
-  call.on('close',()=>{
-    handleRemoteMicStop(ownerId);
-  });
-
-  call.on('error',()=>{
-    handleRemoteMicStop(ownerId);
-  });
-
-}
-
-function handleRemoteShareStop(ownerId){
-
-  if(state.activeShareOwner!==ownerId) return;
-
-  clearActiveShare(ownerId);
-
-  if(isHost()){
-    for(const [peerId,p] of Object.entries(state.peers)){
-      if(peerId!==ownerId){
-        closeCall(p.call);
-        p.call=null;
+    
+    async function toggleMic() {
+      if(!myMicStream) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+          myMicStream = stream;
+          isMicEnabled = true;
+          for(let [pid] of peersMap.entries()) callPeerWithMic(pid, stream, peer.id);
+          muteBtn.innerHTML = '🎤 Disable Mic';
+          muteBtn.classList.remove('mic-off');
+          muteBtn.style.background = '#3b82f6';
+          return;
+        } catch(e) { toast("Microphone access denied"); return; }
+      }
+      if(isMicEnabled) {
+        myMicStream.getAudioTracks().forEach(t => t.enabled = false);
+        isMicEnabled = false;
+        for(let [pid, p] of peersMap.entries()) {
+          if(p.micCalls && p.micCalls.has(peer.id)) {
+            p.micCalls.get(peer.id).close();
+            p.micCalls.delete(peer.id);
+          }
+        }
+        broadcastToPeers({ type:'mic_stop', ownerId: peer.id });
+        muteBtn.innerHTML = '🎤 Enable Mic';
+        muteBtn.classList.add('mic-off');
+        muteBtn.style.background = '#181e2a';
+      } else {
+        if(myMicStream) myMicStream.getAudioTracks().forEach(t => t.enabled = true);
+        else {
+          try { myMicStream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch(e){ toast("Mic unavailable"); return; }
+        }
+        isMicEnabled = true;
+        for(let [pid] of peersMap.entries()) callPeerWithMic(pid, myMicStream, peer.id);
+        muteBtn.innerHTML = '🎤 Disable Mic';
+        muteBtn.classList.remove('mic-off');
+        muteBtn.style.background = '#3b82f6';
       }
     }
-  }
-
-}
-
-function handleRemoteMicStop(ownerId){
-
-  removeRemoteMic(ownerId);
-  closeMicCallsForOwner(ownerId);
-
-}
-
-
-
-async function toggleScreenShare(){
-
-  if(state.isSharing){
-    stopSharing();
-  }else{
-    startSharing();
-  }
-
-}
-
-async function startSharing(){
-
-  try{
-
-    const stream =
-      await navigator.mediaDevices.getDisplayMedia({
-        video:true,
-        audio:true
-      });
-
-    state.screenStream=stream;
-    state.isSharing=true;
-
-    setActiveShare(peer.id,state.myName,stream);
-
-    stream.getVideoTracks().forEach(track=>{
-      track.addEventListener('ended',stopSharing,{once:true});
-    });
-
-    for(const [peerId,p] of Object.entries(state.peers)){
-
-      callPeerWithStream(
-        peerId,
-        stream,
-        screenMetadata()
-      );
-
-    }
-
-    document.getElementById('share-btn')
-      .classList.add('danger');
-
-    document.getElementById('share-btn')
-      .textContent='Stop Sharing';
-
-  }catch(err){
-
-    toast('Screen share cancelled');
-
-  }
-
-}
-
-function stopSharing(){
-
-  if(!state.screenStream || !state.isSharing) return;
-
-  state.isSharing=false;
-
-  broadcastData({
-    type:'screen-stop',
-    ownerId:peer.id
-  });
-
-  for(const [,p] of Object.entries(state.peers)){
-    closeCall(p.call);
-    p.call=null;
-  }
-
-  state.screenStream.getTracks()
-    .forEach(t=>t.stop());
-
-  state.screenStream=null;
-
-  clearActiveShare(peer.id);
-
-  document.getElementById('share-btn')
-    .classList.remove('danger');
-
-  document.getElementById('share-btn')
-    .textContent='Share Screen';
-
-}
-
-
-
-async function toggleMute(){
-
-  const btn=document.getElementById('mute-btn');
-
-  try{
-
-    if(!state.micStream){
-
-      state.micStream =
-        await navigator.mediaDevices.getUserMedia({
-          audio:{
-            echoCancellation:true,
-            noiseSuppression:true,
-            autoGainControl:true
+    
+    // ----- Incoming Calls handler -----
+    function onPeerCall(call) {
+      const meta = call.metadata || {};
+      if(meta.type === 'mic') {
+        call.answer();
+        const ownerId = meta.ownerId || call.peer;
+        call.on('stream', (stream) => {
+          remoteMicStreams.set(ownerId, stream);
+          let audioEl = document.getElementById(`remote-audio-${ownerId.replace(/[^a-z0-9]/gi,'')}`);
+          if(!audioEl) {
+            audioEl = document.createElement('audio');
+            audioEl.id = `remote-audio-${ownerId.replace(/[^a-z0-9]/gi,'')}`;
+            audioEl.autoplay = true;
+            document.body.appendChild(audioEl);
+          }
+          audioEl.srcObject = stream;
+          if(isHost && ownerId !== peer?.id) {
+            for(let [pid] of peersMap.entries()) {
+              if(pid !== ownerId && pid !== call.peer) {
+                callPeerWithMic(pid, stream, ownerId);
+              }
+            }
           }
         });
-
-    }
-
-    const turningOn=!state.micEnabled;
-
-    state.micStream
-      .getAudioTracks()
-      .forEach(track=>{
-        track.enabled=turningOn;
+        call.on('close', () => { stopRemoteMic(ownerId); });
+        return;
+      }
+      // screen share
+      call.answer();
+      const ownerId = meta.ownerId || call.peer;
+      const ownerName = meta.ownerName || 'User';
+      call.on('stream', (stream) => {
+        if(activeShareLock && activeShareOwner !== ownerId) {
+          toast("⚠️ Another screen share already playing", 1500);
+          return;
+        }
+        activeShareLock = true;
+        activeShareOwner = ownerId;
+        activeShareName = ownerName;
+        activeShareStream = stream;
+        mainVideo.muted = (ownerId === peer?.id);
+        mainVideo.srcObject = stream;
+        document.getElementById('placeholder').style.display = 'none';
+        document.getElementById('stage-label').innerText = `${ownerName}'s screen`;
+        if(isHost && ownerId !== peer?.id) {
+          for(let [pid] of peersMap.entries()) {
+            if(pid !== ownerId) callPeerWithScreen(pid, stream, ownerId, ownerName);
+          }
+        }
+        stream.getVideoTracks()[0]?.addEventListener('ended', () => handleRemoteShareStop(ownerId));
       });
-
-    if(turningOn){
-
-      state.micEnabled=true;
-
-      for(const peerId of Object.keys(state.peers)){
-        callPeerWithMic(peerId,state.micStream,micMetadata());
+      call.on('close', () => handleRemoteShareStop(ownerId));
+    }
+    
+    // ----- Host Migration -----
+    async function performHostMigration() {
+      if(migrationInProgress || isHost || peersMap.size === 0) return;
+      migrationInProgress = true;
+      
+      // Select new host: the peer with smallest peerId (deterministic)
+      const sortedPeers = Array.from(peersMap.keys()).sort();
+      const newHostId = sortedPeers[0];
+      const newHostInfo = peersMap.get(newHostId);
+      
+      if(!newHostInfo || newHostId === peer?.id) {
+        migrationInProgress = false;
+        return;
       }
-
-    }else{
-
-      stopMicSharing();
-
+      
+      addSystemMessage(`⚠️ Host left. Migrating to ${newHostInfo.name || 'new host'}...`);
+      toast("Host migration in progress, reconnecting...", 4000);
+      
+      // Notify all peers about new host
+      const migrationMsg = { type: 'host_migration', newHostId: newHostId, newHostName: newHostInfo.name, roomSecret: roomSecret };
+      broadcastToPeers(migrationMsg);
+      
+      // Reconnect to new host
+      setTimeout(() => {
+        // Close existing peer connection
+        if(peer) peer.destroy();
+        
+        // Re-join as non-host pointing to new host
+        isHost = false;
+        peer = new Peer(ICE_CONFIG);
+        peer.on('open', async () => {
+          const conn = peer.connect(newHostId, { reliable: true });
+          setupDataConnection(conn, false);
+          peer.on('call', onPeerCall);
+          toast(`Reconnected to new host: ${newHostInfo.name}`);
+          migrationInProgress = false;
+        });
+        peer.on('error', () => {
+          toast("Migration failed, room may be unstable");
+          migrationInProgress = false;
+        });
+      }, 500);
     }
-
-    if(state.micEnabled){
-
-      btn.textContent='Mic On';
-
-      btn.classList.remove('active');
-
-    }else{
-
-      btn.textContent='Mic Off';
-
-      btn.classList.add('active');
-
-    }
-
-  }catch{
-
-    toast('Microphone access denied');
-
-  }
-
-}
-
-
-
-function toggleFullscreen(){
-
-  const el=document.querySelector('.stage');
-
-  if(!document.fullscreenElement){
-    el.requestFullscreen();
-  }else{
-    document.exitFullscreen();
-  }
-
-}
-
-
-
-function leaveRoom(){
-
-  stopSharing();
-  stopMicSharing();
-
-  if(state.micStream){
-
-    state.micStream.getTracks()
-      .forEach(t=>t.stop());
-
-  }
-
-  if(peer){
-    peer.destroy();
-  }
-
-  location.reload();
-}
-
-
-
-window.addEventListener('beforeunload',()=>{
-
-  try{
-
-    stopSharing();
-    stopMicSharing();
-
-    if(state.micStream){
-
-      state.micStream.getTracks()
-        .forEach(t=>t.stop());
-
-    }
-
-    if(peer){
-      peer.destroy();
-    }
-
-  }catch{}
-
-});
-
-
-
-window.addEventListener('DOMContentLoaded',()=>{
-
-  const params=new URLSearchParams(location.search);
-
-  const room=params.get('room');
-
-  if(room){
-
-    document.getElementById('join-code').value=room;
-
-  }
-
-  document.getElementById('chat-input')
-    .addEventListener('keydown',e=>{
-
-      if(e.key==='Enter'){
-        sendChat();
+    
+    // ----- Data channel & authentication (single clean path) -----
+    function addPeerConnection(peerId, displayName) {
+      // Prevent double registration
+      if(peersMap.has(peerId) && peersMap.get(peerId).name !== 'Connecting...') return;
+      const existing = peersMap.get(peerId) || { dataConn: null, micCalls: new Map() };
+      existing.name = displayName;
+      peersMap.set(peerId, existing);
+      updatePeerCountUI();
+      const cardDiv = document.createElement('div');
+      cardDiv.className = 'peer-card';
+      cardDiv.id = `peer-card-${peerId}`;
+      cardDiv.innerHTML = `<div class="peer-video"></div><div class="peer-meta">🎤 ${escapeHtml(displayName)}</div>`;
+      peersPanel.appendChild(cardDiv);
+      addSystemMessage(`${displayName} joined`);
+      
+      // Relay active media to new peer (host only)
+      if(isHost) {
+        if(activeShareStream && activeShareOwner) {
+          callPeerWithScreen(peerId, activeShareStream, activeShareOwner, activeShareName);
+        }
+        for(let [ownerId, stream] of remoteMicStreams.entries()) {
+          callPeerWithMic(peerId, stream, ownerId);
+        }
+        if(isMicEnabled && myMicStream) callPeerWithMic(peerId, myMicStream, peer.id);
+        if(isSharingScreen && myScreenStream) callPeerWithScreen(peerId, myScreenStream, peer.id, myName);
       }
-
+    }
+    
+    function setupDataConnection(conn, isIncoming = false) {
+      const peerId = conn.peer;
+      let authenticated = false;
+      
+      conn.on('open', () => {
+        if(!isIncoming && !isHost) {
+          // Joiner: send hello request
+          conn.send(JSON.stringify({ type: 'hello', name: myName }));
+        }
+      });
+      
+      conn.on('data', (raw) => {
+        try {
+          const msg = JSON.parse(raw);
+          
+          // Only authentication flow
+          if(msg.type === 'hello' && isHost && !authenticated) {
+            // Host receives join request, send secret
+            conn.send(JSON.stringify({ type: 'welcome', secret: roomSecret, hostName: myName }));
+            return;
+          }
+          
+          if(msg.type === 'welcome' && !isHost && !authenticated) {
+            roomSecret = msg.secret;
+            authenticated = true;
+            conn.send(JSON.stringify({ type: 'ready', name: myName }));
+            addPeerConnection(peerId, msg.hostName || 'Host');
+            return;
+          }
+          
+          if(msg.type === 'ready' && isHost && !authenticated) {
+            authenticated = true;
+            addPeerConnection(peerId, msg.name);
+            return;
+          }
+          
+          if(!authenticated) {
+            conn.close();
+            return;
+          }
+          
+          // Normal messages after auth
+          if(msg.type === 'chat') {
+            addChatMessage(msg.name, msg.text);
+            if(isHost) broadcastToPeers(msg, peerId);
+            return;
+          }
+          
+          if(msg.type === 'screen_stop') { 
+            handleRemoteShareStop(msg.ownerId); 
+            if(isHost) broadcastToPeers(msg, peerId); 
+            return; 
+          }
+          
+          if(msg.type === 'mic_stop') { 
+            stopRemoteMic(msg.ownerId); 
+            if(isHost) broadcastToPeers(msg, peerId); 
+            return; 
+          }
+          
+          if(msg.type === 'host_migration' && !isHost) {
+            // Received migration signal from old host before it left
+            if(msg.newHostId === peer?.id) {
+              // I am the new host!
+              isHost = true;
+              roomSecret = msg.roomSecret;
+              addSystemMessage("🎉 You are now the host! The room is stable.");
+              toast("You are now the host", 3000);
+              // Re-establish connections to all peers as host
+              for(let [pid, p] of peersMap.entries()) {
+                if(pid !== peer?.id && p.dataConn) {
+                  if(activeShareStream && activeShareOwner) callPeerWithScreen(pid, activeShareStream, activeShareOwner, activeShareName);
+                  if(isMicEnabled && myMicStream) callPeerWithMic(pid, myMicStream, peer.id);
+                  for(let [ownerId, stream] of remoteMicStreams.entries()) {
+                    callPeerWithMic(pid, stream, ownerId);
+                  }
+                }
+              }
+            }
+            return;
+          }
+        } catch(e) { console.warn(e); }
+      });
+      
+      conn.on('close', () => {
+        const p = peersMap.get(peerId);
+        const nameLeft = p?.name || 'Someone';
+        peersMap.delete(peerId);
+        updatePeerCountUI();
+        document.getElementById(`peer-card-${peerId}`)?.remove();
+        stopRemoteMic(peerId);
+        if(activeShareOwner === peerId) handleRemoteShareStop(peerId);
+        addSystemMessage(`${nameLeft} left`);
+        
+        // Host migration: if host leaves and I'm not host and not already migrating
+        if(!isHost && peersMap.size > 0 && peerId === currentHostId && !migrationInProgress) {
+          performHostMigration();
+        }
+      });
+      
+      if(!peersMap.has(peerId)) {
+        peersMap.set(peerId, { dataConn: conn, name: 'Connecting...', micCalls: new Map() });
+      } else {
+        peersMap.get(peerId).dataConn = conn;
+      }
+    }
+    
+    // ----- Room Lifecycle -----
+    function normalizeRoomId(raw) { let clean = raw.toUpperCase().replace(/[^A-Z0-9]/g,''); if(clean.length<6) clean = clean.padEnd(6,'X'); return clean.slice(0,3)+'-'+clean.slice(3,6); }
+    function getHostPeerId(roomId) { return `HOST_${roomId.replace(/-/g,'')}`; }
+    
+    async function createRoom() {
+      myName = hostNameInput.value.trim() || 'Host';
+      const rawId = Math.random().toString(36).slice(2,8).toUpperCase();
+      currentRoomId = normalizeRoomId(rawId);
+      const hostPeerId = getHostPeerId(currentRoomId);
+      currentHostId = hostPeerId;
+      isHost = true;
+      roomSecret = Math.random().toString(36).substring(2, 15);
+      peer = new Peer(hostPeerId, ICE_CONFIG);
+      await new Promise((res,rej) => { peer.on('open', res); peer.on('error', rej); });
+      peer.on('connection', (conn) => setupDataConnection(conn, true));
+      peer.on('call', onPeerCall);
+      
+      // Before unload, notify peers for migration
+      window.addEventListener('beforeunload', () => {
+        if(isHost && peersMap.size > 0) {
+          const sorted = Array.from(peersMap.keys()).sort();
+          if(sorted.length > 0) {
+            const newHostId = sorted[0];
+            broadcastToPeers({ type: 'host_migration', newHostId: newHostId, newHostName: myName, roomSecret: roomSecret });
+          }
+        }
+      });
+      
+      roomIdDisplay.classList.remove('hidden');
+      roomIdDisplay.innerText = currentRoomId;
+      showRoom();
+      toast("Room created! Share code. Room survives host departure.");
+    }
+    
+    async function joinRoom() {
+      myName = joinNameInput.value.trim() || 'Guest';
+      let rawCode = joinCodeInput.value.trim().toUpperCase();
+      currentRoomId = normalizeRoomId(rawCode);
+      const hostPeerId = getHostPeerId(currentRoomId);
+      currentHostId = hostPeerId;
+      isHost = false;
+      peer = new Peer(ICE_CONFIG);
+      await new Promise((res,rej) => { peer.on('open', res); peer.on('error', rej); });
+      const conn = peer.connect(hostPeerId, { reliable: true });
+      setupDataConnection(conn, false);
+      peer.on('call', onPeerCall);
+      showRoom();
+      toast("Joining room...");
+    }
+    
+    function showRoom() {
+      lobbyDiv.style.display = 'none';
+      roomDiv.style.display = 'flex';
+      headerRoomId.innerText = currentRoomId;
+    }
+    
+    function leaveRoom() {
+      if(myScreenStream) { myScreenStream.getTracks().forEach(t=>t.stop()); myScreenStream=null; }
+      if(myMicStream) { myMicStream.getTracks().forEach(t=>t.stop()); myMicStream=null; }
+      if(peer) peer.destroy();
+      location.reload();
+    }
+    
+    function toggleFullscreen() { const el = document.querySelector('.stage'); if(!document.fullscreenElement) el.requestFullscreen(); else document.exitFullscreen(); }
+    
+    // Event bindings
+    createBtn.onclick = createRoom;
+    joinBtn.onclick = joinRoom;
+    leaveBtn.onclick = leaveRoom;
+    shareBtn.onclick = () => { if(isSharingScreen) stopScreenShare(); else startScreenShare(); };
+    muteBtn.onclick = toggleMic;
+    fullscreenBtn.onclick = toggleFullscreen;
+    sendChatBtn.onclick = () => { const txt = chatInput.value.trim(); if(txt) { addChatMessage(myName, txt); broadcastToPeers({ type:'chat', name: myName, text: txt }); chatInput.value = ''; } };
+    chatInput.addEventListener('keypress', e => { if(e.key === 'Enter') sendChatBtn.click(); });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        currentTab = btn.dataset.tab;
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(currentTab === 'peers' ? 'peers-panel' : 'chat-panel').classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if(currentTab === 'chat') { unreadCount = 0; chatBadge.style.display = 'none'; }
+      };
     });
-
-});
+    window.onload = () => { const urlRoom = new URLSearchParams(location.search).get('room'); if(urlRoom) joinCodeInput.value = urlRoom; };
+  })();
 </script>
-
 </body>
 </html>
