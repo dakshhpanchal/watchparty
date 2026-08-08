@@ -463,7 +463,31 @@
       if(activeShareLock && activeShareOwner !== peer?.id) { toast("Someone is already sharing screen", 2000); return; }
       if(isSharingScreen) return;
       try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            width: { ideal: 1920, max: 1920 },
+            height: { ideal: 1080, max: 1080 },
+            frameRate: { ideal: 30, max: 60 }
+          },
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+        
+        // Optimize for motion video and high-quality audio synchronization
+        stream.getVideoTracks().forEach(track => {
+          if ('contentHint' in track) {
+            track.contentHint = 'motion';
+          }
+        });
+        stream.getAudioTracks().forEach(track => {
+          if ('contentHint' in track) {
+            track.contentHint = 'music';
+          }
+        });
+
         myScreenStream = stream;
         isSharingScreen = true;
         activeShareLock = true;
