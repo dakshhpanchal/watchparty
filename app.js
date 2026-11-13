@@ -11,12 +11,12 @@
 
     iceServers: [
       { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-      // PeerJS's free public TURN server: shared and best-effort. For reliable
-      // connections behind strict NATs, add your own TURN server here, e.g.:
-      // { urls: ['turn:turn.example.com:3478', 'turns:turn.example.com:443?transport=tcp'],
-      //   username: 'user', credential: 'pass' },
-      { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'],
-        username: 'peerjs', credential: 'peerjsp' },
+      // TURN relay: used only when two devices can't connect directly (mobile
+      // data, routers with client isolation, strict NATs). These credentials
+      // are public by nature (the browser needs them); the free tier's quota
+      // caps any abuse. Replace with your own TURN server if needed.
+      { urls: ['turn:free.expressturn.com:3478', 'turn:free.expressturn.com:3478?transport=tcp'],
+        username: '000000002110057528', credential: 'Aq9pqk25ArDKxiXGZtEqOqbWUiQ=' },
     ],
 
     // Screen-share presets. `bitrate` is the per-viewer video cap (bps). The
@@ -30,7 +30,7 @@
     micBitrate: 48_000,
     startBitrateKbps: 2500,        // skip the slow ramp-up from ~300 kbps
 
-    joinTimeoutMs: 10_000,
+    joinTimeoutMs: 30_000,     // relayed connections can take a while on mobile
     migrationTimeoutMs: 60_000,
     migrationStaggerMs: 6_000,     // delay between successive host candidates
     pendingPeerGraceMs: 20_000,    // new host waits this long for old guests
@@ -914,7 +914,7 @@
   function friendlyError(err) {
     switch (err?.type) {
       case 'peer-unavailable': return "Room not found. Check the code, or ask the host if they're still online.";
-      case 'timeout': return 'Timed out connecting to the room. Try again.';
+      case 'timeout': return "Couldn't connect to the host. Your network may be blocking the connection. Try again, or switch networks.";
       case 'browser-incompatible': return 'This browser does not support WebRTC.';
       case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
         return 'Could not reach the signaling server. Check your connection.';
