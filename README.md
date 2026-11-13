@@ -1,97 +1,73 @@
 # WatchParty
 
-A serverless, peer-to-peer screen sharing and watch party app that runs entirely in the browser. No backend, no accounts, no installation required.
-
-## How It Works
-
-WatchParty uses [PeerJS](https://peerjs.com/) (a WebRTC wrapper) for all real-time communication. One participant acts as the **host** — their browser peer ID becomes the room identifier. All other participants connect directly to the host. The host acts as a relay: when a non-host peer shares their screen or enables their mic, the host forwards those streams to everyone else in the room.
-
-Data messages (chat, participant list, share-stop signals) are sent over PeerJS data connections. Media (screen video, audio, mic) is sent over PeerJS media calls.
+A serverless, peer-to-peer screen sharing and watch party app that runs entirely in the browser. No backend, no accounts, no build step.
 
 ## Features
 
-- **Screen sharing** — any participant can share their screen (including system audio if the browser supports it). The host relays the stream to all other peers.
-- **Mic audio** — per-participant microphone with echo cancellation, noise suppression, and auto gain control. Also relayed through the host.
-- **Live chat** — text chat with unread message badge when the chat tab is not active.
-- **Participant list** — sidebar showing all connected peers with their camera/video thumbnails (if a stream is active).
-- **Shareable room links** — room code is appended to the URL (`?room=XXX-XXX`) so you can send a direct join link.
-- **Fullscreen** — one-click fullscreen on the main video stage.
-- **Responsive layout** — stacks vertically on screens narrower than 900px.
+- **Screen sharing**: any participant can share their screen, including tab/system audio where the browser supports it. Only one person shares at a time.
+- **Quality presets**: 1080p30 (default), 1080p60 or 720p30. You can change it while sharing.
+- **Mic audio**: per-participant microphone with echo cancellation, noise suppression and auto gain control.
+- **Live chat**: text chat with an unread badge.
+- **People list**: everyone in the room, with host, mic and sharing indicators.
+- **Shareable links**: the room code is added to the URL (`?room=ABC-123`), and **Copy link** puts it on your clipboard.
+- **Host migration**: if the host leaves, the earliest-joined guest takes over automatically. Ongoing screen shares and mics keep playing.
+- **Stream stats**: the chart button on the stage shows resolution, fps, bitrate, codec, packet loss, RTT and whether you're on a direct or TURN-relayed path.
+- **Fullscreen** and a responsive layout (stacks vertically below 780px).
 
 ## Usage
 
-### Hosting a room
+Serve the folder with any static file server (or just open `index.html`). Note that screen capture requires `https://` or `localhost`.
 
-1. Open `index.html` in a browser.
-2. Enter your name under **Create Room** and click **Create Room**.
-3. A room code (e.g. `ABC-123`) will appear. Share it or copy the URL from the address bar.
-4. Click **Share Screen** to start sharing. Click **Mic Off** to toggle your microphone.
+```sh
+python3 -m http.server 8000   # then open http://localhost:8000
+```
 
-### Joining a room
-
-1. Open `index.html` (or the shared link).
-2. Enter your name and the room code under **Join Room**, then click **Join Room**.
-3. The host's screen will appear automatically if they are already sharing.
-
-### Leaving
-
-Click **Leave** in the top bar. All streams and connections are cleaned up gracefully.
+**Host:** enter your name, click **Create Room**, then **Copy link** and send it to friends.
+**Join:** open the link (or enter the 6-character code), enter your name, click **Join Room**.
+**Share:** pick a quality and click **Share Screen**. In the browser picker, tick **Share audio** to include sound.
 
 ## Architecture
 
-```
-Host peer (ROOM-<roomId>)
-  |
-  |-- data connection --> Peer A
-  |-- data connection --> Peer B
-  |-- media call (screen) --> Peer A
-  |-- media call (screen) --> Peer B   <-- relayed from Peer A's share
-  |-- media call (mic) --> Peer A
-  |-- media call (mic) --> Peer B      <-- relayed from Peer A's mic
-```
-
-The host peer ID is deterministically derived from the room code (`ROOM-` + code without the hyphen), so joining peers can connect without a signaling server beyond PeerJS's free public signaling.
-
-## File Structure
+[PeerJS](https://peerjs.com/) (WebRTC) handles everything. PeerJS's free public server is used only for signaling.
 
 ```
-watchparty/
-  index.html    # entire app (HTML + CSS + JS, single file)
-  README.md
+              data (roster, chat)            media (direct, no relay)
+  Guest B ───────────────┐                   Sharer ──screen──▶ every viewer
+  Guest C ───────────▶ Host hub              Each mic ─audio──▶ every other peer
+  Guest D ───────────────┘   (id: watchparty-v2-<CODE>)
 ```
 
-## Dependencies
+- Every participant has a **media peer** with a random id. Screen and mic streams go **directly** from their owner to each other participant (a mesh). Nothing is relayed or re-encoded by the host.
+- The host also runs a **hub peer** registered under the room's well-known id (`watchparty-v2-` + code). Guests connect a data channel to it. The host keeps the authoritative roster (names, join order, mic/sharing state), broadcasts it, relays chat and enforces one sharer at a time.
+- **Host migration:** every guest knows the roster ordered by join time.
+  - When the host leaves (or its connection drops), the first guest in that order claims the hub id. The other guests reconnect to it, retrying with backoff. Later guests only try to claim the id after a stagger, in case the first one is also gone.
+  - Media between the remaining guests isn't interrupted, because it never went through the hub.
 
-All loaded from CDN at runtime — no build step needed.
+### Streaming performance
 
-| Library | Version | Purpose |
-|---|---|---|
-| PeerJS | 1.5.4 | WebRTC peer connections |
-| Inter (Google Fonts) | — | UI font |
+- The video codec preference is H264 (hardware encode/decode on most devices), then VP9, then VP8.
+- Each sender gets a bitrate cap from the quality preset, `maintain-framerate` degradation, and high priority. It also starts at about 2.5 Mbps instead of ramping up slowly from a low bitrate.
+- Screen audio uses stereo Opus at 128 kbps with FEC.
+- **Bandwidth:** the sharer uploads one stream per viewer. 1080p30 is capped at 6 Mbps per viewer, so 4 viewers can need about 24 Mbps of upload. If viewers lag, open the stats overlay:
+  - If the sharer's line shows `LIMIT:bandwidth`, choose 720p30.
+  - If it shows `LIMIT:cpu`, choose 30fps.
 
-## Browser Requirements
+### TURN servers
 
-- A modern Chromium or Firefox-based browser.
-- Screen sharing requires a secure context (`https://` or `localhost`). Opening `index.html` directly as a `file://` URL will block `getDisplayMedia`.
-- Mic access requires user permission via the browser prompt.
+The default config uses Google STUN plus PeerJS's free public TURN, which is shared and best-effort. If people behind strict NATs or corporate networks can't connect, add your own TURN server (coturn, Metered, Twilio, …) to `CONFIG.iceServers` at the top of `app.js`.
 
 ## Limitations
 
-- **Host dependency** — if the host leaves, all relayed streams drop. Peers who were sharing directly to the host lose their connection.
-- **Scalability** — because every stream routes through the host's browser, bandwidth and CPU on the host machine become the bottleneck. Works well for small groups (2–8 people); larger rooms may degrade.
-- **No persistence** — chat history and participant state are in-memory only. Refreshing or rejoining starts fresh.
-- **PeerJS public signaling** — uses PeerJS's free public signaling server by default. For production use, self-host a [PeerJS server](https://github.com/peers/peerjs-server) and pass its config to the `Peer` constructor.
+- Mesh media means the sharer's upload grows with the number of viewers. This is fine for small groups (roughly 2–8 people).
+- Rooms only exist while someone is in them. No data is stored anywhere.
+- There is no access control: anyone with the code can join.
 
-## Self-Hosting
+## File structure
 
-Since the entire app is a single HTML file, serving it is trivial:
-
-```bash
-# Python
-python3 -m http.server 8080
-
-# Node (npx)
-npx serve .
 ```
-
-Then open `http://localhost:8080` in your browser. For screen sharing to work across devices on a network, serve over HTTPS or use a tunnel like `ngrok`.
+watchparty/
+  index.html   # markup
+  style.css    # styles
+  app.js       # all app logic (config at the top)
+  README.md
+```
