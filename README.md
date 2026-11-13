@@ -1,73 +1,128 @@
-# WatchParty
+<div align="center">
 
-A serverless, peer-to-peer screen sharing and watch party app that runs entirely in the browser. No backend, no accounts, no build step.
+# 🍿 WatchParty
 
-## Features
+**Watch together, peer to peer.**<br>
+Share your screen in 1080p with sound, chat, and talk, right in the browser.<br>
+No accounts. No installs. No backend.
 
-- **Screen sharing**: any participant can share their screen, including tab/system audio where the browser supports it. Only one person shares at a time.
-- **Quality presets**: 1080p30 (default), 1080p60 or 720p30. You can change it while sharing.
-- **Mic audio**: per-participant microphone with echo cancellation, noise suppression and auto gain control.
-- **Live chat**: text chat with an unread badge.
-- **People list**: everyone in the room, with host, mic and sharing indicators.
-- **Shareable links**: the room code is added to the URL (`?room=ABC-123`), and **Copy link** puts it on your clipboard.
-- **Host migration**: if the host leaves, the earliest-joined guest takes over automatically. Ongoing screen shares and mics keep playing.
-- **Stream stats**: the chart button on the stage shows resolution, fps, bitrate, codec, packet loss, RTT and whether you're on a direct or TURN-relayed path.
-- **Fullscreen** and a responsive layout (stacks vertically below 780px).
+[**▶ Open WatchParty**](https://dakshhpanchal.github.io/watchparty/)
 
-## Usage
+![JavaScript](https://img.shields.io/badge/vanilla-JS-f7df1e?logo=javascript&logoColor=black)
+![WebRTC](https://img.shields.io/badge/WebRTC-PeerJS-333?logo=webrtc)
+![No build step](https://img.shields.io/badge/build-none-brightgreen)
+![Hosted on GitHub Pages](https://img.shields.io/badge/hosted-GitHub%20Pages-222?logo=github)
 
-Serve the folder with any static file server (or just open `index.html`). Note that screen capture requires `https://` or `localhost`.
+<img src="docs/room.png" alt="WatchParty room: shared screen on the left, chat on the right" width="860">
+
+</div>
+
+---
+
+## ✨ Features
+
+| | |
+|---|---|
+| 🖥️ **Screen sharing** | Share a tab, window or whole screen, including audio. Anyone in the room can share (one at a time). |
+| 🎚️ **Quality presets** | 1080p 30fps, 1080p 60fps or 720p 30fps. You can switch while sharing. |
+| 🎙️ **Voice** | Per-person mic with echo cancellation, noise suppression and auto gain. |
+| 💬 **Chat** | Live text chat with an unread badge. |
+| 👥 **People list** | Everyone in the room, with host, mic and sharing indicators. |
+| 🔗 **Invite links** | One click copies a `?room=ABC-123` link that pre-fills the code. |
+| 🔁 **Host migration** | If the host leaves, the next person takes over automatically and the stream keeps playing. |
+| 📊 **Stream stats** | Live resolution, fps, bitrate, codec, packet loss, latency, and whether you're on a direct or relayed connection. |
+| 📱 **Mobile friendly** | Phones can join and watch; the layout stacks on narrow screens. |
+
+<p align="center">
+  <img src="docs/mobile.png" alt="WatchParty on a phone" width="260">
+</p>
+
+## 🚀 Quick start
+
+**Use it:** open **[dakshhpanchal.github.io/watchparty](https://dakshhpanchal.github.io/watchparty/)**.
+
+1. **Host:** enter your name → **Create Room** → **Copy link** → send it to friends.
+2. **Friends:** open the link → enter a name → **Join Room**.
+3. **Share:** pick a quality → **Share Screen**. In the browser picker, tick **"Share audio"** to include sound.
+
+**Run it locally:** it's just static files.
 
 ```sh
-python3 -m http.server 8000   # then open http://localhost:8000
+git clone https://github.com/dakshhpanchal/watchparty.git
+cd watchparty
+python3 -m http.server 8000     # open http://localhost:8000
 ```
 
-**Host:** enter your name, click **Create Room**, then **Copy link** and send it to friends.
-**Join:** open the link (or enter the 6-character code), enter your name, click **Join Room**.
-**Share:** pick a quality and click **Share Screen**. In the browser picker, tick **Share audio** to include sound.
+> [!NOTE]
+> Screen capture needs a desktop browser (Chrome, Edge, Firefox) on `https://` or `localhost`. Phones can join and watch, but mobile browsers can't share their screen.
 
-## Architecture
+## 🧠 How it works
 
-[PeerJS](https://peerjs.com/) (WebRTC) handles everything. PeerJS's free public server is used only for signaling.
+WatchParty is built on [WebRTC](https://webrtc.org/) via [PeerJS](https://peerjs.com/). PeerJS's free public server is only used to introduce peers to each other ("signaling"). Your video never goes through it.
 
+```mermaid
+flowchart LR
+    subgraph Data["Data: roster + chat"]
+        G1[Guest] --> H((Host hub))
+        G2[Guest] --> H
+        G3[Guest] --> H
+    end
+    subgraph Media["Media: direct, no re-encoding"]
+        S[Sharer] -- screen + audio --> V1[Viewer]
+        S -- screen + audio --> V2[Viewer]
+        S -- screen + audio --> V3[Viewer]
+    end
 ```
-              data (roster, chat)            media (direct, no relay)
-  Guest B ───────────────┐                   Sharer ──screen──▶ every viewer
-  Guest C ───────────▶ Host hub              Each mic ─audio──▶ every other peer
-  Guest D ───────────────┘   (id: watchparty-v2-<CODE>)
+
+- **Media goes direct.** Screen and mic streams go straight from their owner to each viewer. Nothing is relayed or re-encoded by the host, which keeps latency low and picture quality high.
+- **The host is a hub for data.** The host's browser registers the room's well-known ID (`watchparty-v2-<CODE>`). Guests connect to it for the people list and chat. The host also makes sure only one person shares at a time.
+- **Host migration:** everyone knows the join order. When the host leaves, the earliest guest takes over the room ID and the others reconnect to it. Streams between the remaining people never stop.
+- **Tuned for video:**
+  - H264 is the preferred codec (hardware-accelerated on most devices).
+  - Each quality preset sets a bitrate cap, and the encoder drops resolution before it drops frames.
+  - Video starts at about 2.5 Mbps instead of ramping up slowly from a low bitrate.
+  - Screen audio is stereo Opus at 128 kbps.
+
+## 🌐 Connectivity & TURN
+
+Most of the time devices connect directly. When they can't (mobile data, Wi-Fi with client isolation, strict corporate networks), traffic falls back to a **TURN relay** that forwards the encrypted stream.
+
+- The app ships with a free [ExpressTURN](https://www.expressturn.com/) relay configured in `CONFIG.iceServers` at the top of [`app.js`](app.js).
+- Only relayed connections use its quota. 1080p30 uses about 2.7 GB per relayed viewer per hour.
+- To use your own relay (coturn, Metered, Twilio, Cloudflare…), replace that entry:
+
+```js
+iceServers: [
+  { urls: ['stun:stun.l.google.com:19302'] },
+  { urls: ['turn:your.turn.server:3478', 'turn:your.turn.server:3478?transport=tcp'],
+    username: 'user', credential: 'pass' },
+],
 ```
 
-- Every participant has a **media peer** with a random id. Screen and mic streams go **directly** from their owner to each other participant (a mesh). Nothing is relayed or re-encoded by the host.
-- The host also runs a **hub peer** registered under the room's well-known id (`watchparty-v2-` + code). Guests connect a data channel to it. The host keeps the authoritative roster (names, join order, mic/sharing state), broadcasts it, relays chat and enforces one sharer at a time.
-- **Host migration:** every guest knows the roster ordered by join time.
-  - When the host leaves (or its connection drops), the first guest in that order claims the hub id. The other guests reconnect to it, retrying with backoff. Later guests only try to claim the id after a stagger, in case the first one is also gone.
-  - Media between the remaining guests isn't interrupted, because it never went through the hub.
+TURN credentials in a static site are public by nature. Use a provider with a usage cap.
 
-### Streaming performance
+## 🩺 Troubleshooting
 
-- The video codec preference is H264 (hardware encode/decode on most devices), then VP9, then VP8.
-- Each sender gets a bitrate cap from the quality preset, `maintain-framerate` degradation, and high priority. It also starts at about 2.5 Mbps instead of ramping up slowly from a low bitrate.
-- Screen audio uses stereo Opus at 128 kbps with FEC.
-- **Bandwidth:** the sharer uploads one stream per viewer. 1080p30 is capped at 6 Mbps per viewer, so 4 viewers can need about 24 Mbps of upload. If viewers lag, open the stats overlay:
-  - If the sharer's line shows `LIMIT:bandwidth`, choose 720p30.
-  - If it shows `LIMIT:cpu`, choose 30fps.
+| Symptom | What to do |
+|---|---|
+| **"Room not found"** | Check the code. The host must still have the tab open. |
+| **"Couldn't connect to the host"** | The network is blocking peer-to-peer traffic and the relay couldn't help. Try another network, or check your TURN credentials and quota. |
+| **Viewers see lag or blur** | Open 📊 stats on the **sharer's** screen. `LIMIT:bandwidth` means pick **720p30**; `LIMIT:cpu` means pick a 30fps preset. |
+| **No sound** | Tick **"Share audio"** in the share picker. Viewers may need to click **"Click to enable audio"** once. |
+| **Old version after an update** | GitHub Pages caches for about 10 minutes. Hard-refresh, or use a private tab. |
 
-### TURN servers
-
-The default config uses Google STUN plus PeerJS's free public TURN, which is shared and best-effort. If people behind strict NATs or corporate networks can't connect, add your own TURN server (coturn, Metered, Twilio, …) to `CONFIG.iceServers` at the top of `app.js`.
-
-## Limitations
-
-- Mesh media means the sharer's upload grows with the number of viewers. This is fine for small groups (roughly 2–8 people).
-- Rooms only exist while someone is in them. No data is stored anywhere.
-- There is no access control: anyone with the code can join.
-
-## File structure
+## 📁 Project structure
 
 ```
 watchparty/
-  index.html   # markup
-  style.css    # styles
-  app.js       # all app logic (config at the top)
-  README.md
+├── index.html   # markup
+├── style.css    # styles
+├── app.js       # all app logic, with CONFIG at the top
+└── docs/        # README screenshots
 ```
+
+## ⚠️ Limitations
+
+- **Small rooms:** the sharer uploads one stream per viewer, so this works best for about 2–8 people.
+- **No persistence:** a room exists only while someone is in it. Nothing is stored anywhere.
+- **No access control:** anyone with the room code can join.
